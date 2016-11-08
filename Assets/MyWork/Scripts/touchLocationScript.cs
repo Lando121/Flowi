@@ -8,11 +8,17 @@ public class touchLocationScript : MonoBehaviour {
     float y;
     float marginal = 50;
     Vector3 speed = new Vector3( 0, 1, 0 );
-    public Text infoText;
-   
+    public Text healthText;
+    float health = 10f;
+    Vector3 squarePos;
+    float time;
+    int tmpTime;
+    bool playing = true;
 
 	// Use this for initialization
 	void Start () {
+        tmpTime = 0;
+        time = 0f;
         x = gameObject.transform.position.x;
         y = gameObject.transform.position.y;
        
@@ -20,25 +26,57 @@ public class touchLocationScript : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-       
-        Vector3 tmpPos = Camera.main.WorldToScreenPoint(transform.position);
-        infoText.text = tmpPos.ToString();
 
-        if (Input.touchCount > 0)
+        squarePos = Camera.main.WorldToScreenPoint(transform.position);
+        //time = time + Time.deltaTime;
+      
+        if(health > 0)
         {
-            if (tmpPos.y > Screen.height - marginal || tmpPos.y < marginal)
+            healthText.text = health.ToString("0.0");
+        } else
+        {
+            healthText.text = "You survived for: " + time.ToString("0");
+            playing = false;
+        }
+
+        if ((int)Mathf.Floor(time) != tmpTime)
+        {
+            tmpTime++;
+            increaseSpeed();
+        }
+
+        if (Input.touchCount > 0 && playing)
+        {
+            time = time + Time.deltaTime;
+            Vector3 touchPos = Input.GetTouch(0).position;
+            float touchX = touchPos.x;
+            float touchY = touchPos.y;
+
+            if (Mathf.Max(Mathf.Abs(touchX - squarePos.x), Mathf.Abs(touchY - squarePos.y)) > 100)
+            {
+                health = health - 1 * Time.deltaTime;
+            }
+
+            if (squarePos.y > Screen.height - marginal || squarePos.y < marginal)
             {
                 speed = -speed;
-                gameObject.transform.Translate(speed * Time.deltaTime);
+                moveSquare();
             } else
             {
-                gameObject.transform.Translate(speed * Time.deltaTime);
+                moveSquare();
             }
-            
-
-            //Debug.Log(topRight);
-
-          
+                     
         }
+    }
+
+
+    void increaseSpeed()
+    {
+        speed = speed*1.2f;
+    }
+    
+    void moveSquare()
+    {
+        gameObject.transform.Translate(speed * Time.deltaTime);
     }
 }
