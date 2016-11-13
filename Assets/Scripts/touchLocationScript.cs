@@ -15,8 +15,12 @@ public class touchLocationScript : MonoBehaviour {
     int tmpTime;
     bool playing = true;
 
+    public GameObject lineObject;
+    private LineGenerator line;
+
 	// Use this for initialization
 	void Start () {
+        line = lineObject.GetComponent<LineGenerator>();
         tmpTime = 0;
         time = 0f;
         x = gameObject.transform.position.x;
@@ -29,7 +33,9 @@ public class touchLocationScript : MonoBehaviour {
 
         squarePos = Camera.main.WorldToScreenPoint(transform.position);
         //time = time + Time.deltaTime;
-      
+        
+
+        /*
         if(health > 0)
         {
             healthText.text = health.ToString("0.0");
@@ -37,7 +43,7 @@ public class touchLocationScript : MonoBehaviour {
         {
             healthText.text = "You survived for: " + time.ToString("0");
             playing = false;
-        }
+        }*/
 
         if ((int)Mathf.Floor(time) != tmpTime)
         {
@@ -51,6 +57,8 @@ public class touchLocationScript : MonoBehaviour {
             Vector3 touchPos = Input.GetTouch(0).position;
             float touchX = touchPos.x;
             float touchY = touchPos.y;
+
+            healthText.text = "Dist: " + line.distanceToLine(Input.GetTouch(0).position).ToString();
 
             if (Mathf.Max(Mathf.Abs(touchX - squarePos.x), Mathf.Abs(touchY - squarePos.y)) > 100)
             {

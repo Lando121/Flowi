@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class LineGenerator : MonoBehaviour {
 
@@ -8,19 +9,21 @@ public class LineGenerator : MonoBehaviour {
     public int numberOfPoints = 10;
     public float startLineLength = 10.0f;
     public Camera mainCamera;
-    private Vector3[] linePositions;
+    //private Vector3[] linePositions;
     public float xMargin = 0.5f;
     public float scrollSpeed = 0.1f;
     public float yStep = 0.5f;
     public float interpolationSmoothness = 1.0f;
+    
 
     private float screenLeftPos, screenRightPos, screenTop, screenBottom;
 
     private List<KeyValuePair<LineRenderer,Vector3>> lines = new List<KeyValuePair<LineRenderer, Vector3>>();
+    private Dictionary<Vector3, Vector3[]> linePositions = new Dictionary<Vector3, Vector3[]>();
 
 	// Use this for initialization
 	void Start () {
-        linePositions = new Vector3[numberOfPoints];
+        //linePositions = new Vector3[numberOfPoints];
         //line = GetComponent<LineRenderer>();
         //line.SetVertexCount(numberOfPoints);
 
@@ -46,10 +49,10 @@ public class LineGenerator : MonoBehaviour {
 	
 	// Update is called once per frame
 	void FixedUpdate () {
-        //line.transform.Translate(0, -scrollSpeed, 0);
-        scrollSpeed = Mathf.Clamp(scrollSpeed+0.00001f,0,1);
+        //line.transform.Translate(0, -scrollSpeed, 0
+    //    scrollSpeed = Mathf.Clamp(scrollSpeed+0.00001f,0,1);
         updateLines();
-	}
+    }
 
     /// <summary>
     /// Generates a new line and adds it to the list of currently active lines.
@@ -63,8 +66,10 @@ public class LineGenerator : MonoBehaviour {
         newLine.SetPositions(points);
         newLine.useWorldSpace = false;
         lineObject.transform.position = position;
+        Vector3 lastPoint = points[points.Length - 1];
         // Store the line and its last point to easily determine when its last point is no longer visible.
-        lines.Add(new KeyValuePair<LineRenderer, Vector3>(newLine, points[points.Length - 1]));
+        lines.Add(new KeyValuePair<LineRenderer, Vector3>(newLine, lastPoint));
+        linePositions.Add(lastPoint, points);
     }
 
     /// <summary>
@@ -134,6 +139,7 @@ public class LineGenerator : MonoBehaviour {
                 generateLine(spawnNewLine(), lineObject.transform.position);
                 // Remove old line
                 lines.Remove(line);
+                linePositions.Remove(line.Value);
                 Destroy(lineObject);
                 // Break since we can not continue iteration after altering the collection.
                 break;
@@ -196,6 +202,33 @@ public class LineGenerator : MonoBehaviour {
         }
 
         return curvedPoints.ToArray();
+    }
+
+    /// <summary>
+    /// Calculates the distance to the line.
+    /// </summary>
+    /// <param name="position">Position in pixel-space.</param>
+    /// <returns>Distance to line.</returns>
+    public float distanceToLine(Vector2 position) {
+        return distanceToLine(mainCamera.ScreenToWorldPoint(new Vector3(position.x,position.y,mainCamera.nearClipPlane)));
+    }
+
+    /// <summary>
+    /// Calculates distance to the line.
+    /// </summary>
+    /// <param name="position">Position in world-space.</param>
+    /// <returns>Distance to the line.</returns>
+    public float distanceToLine(Vector3 position) {
+        position.z = -1;
+        float minDist = float.MaxValue;
+        foreach (KeyValuePair<LineRenderer, Vector3> line in lines) {
+            Vector3[] points = linePositions[line.Value];
+            Vector3 offset = line.Key.gameObject.transform.position;
+            for (int i = 0; i < points.Length; ++i) {
+                minDist = Mathf.Min(minDist, Mathf.Abs((position - (points[i] + offset)).magnitude));
+            }
+        }
+        return minDist;
     }
 
 }
