@@ -51,6 +51,9 @@ public class touchLocationScript : MonoBehaviour {
             increaseSpeed();
         }
 
+        Vector2 lel = Input.mousePosition;
+        healthText.text = "Dist: " + line.distanceToLine(lel).ToString();
+
         if (Input.touchCount > 0 && playing)
         {
             time = time + Time.deltaTime;
