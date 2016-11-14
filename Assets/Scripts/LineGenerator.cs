@@ -181,11 +181,11 @@ public class LineGenerator : MonoBehaviour {
     /// <returns>The interpolated positions.</returns>
     private Vector3[] smoothInterpolate(Vector3[] arrayToCurve, float smoothness) {
         int numberOfPoints = arrayToCurve.Length;
+        smoothness = Mathf.Max(1.0f, smoothness);
         int curvedLength = numberOfPoints * Mathf.RoundToInt(smoothness) - 1;
         List<Vector3> points;
         List<Vector3> curvedPoints = new List<Vector3>(curvedLength);
 
-        smoothness = Mathf.Min(1.0f, smoothness);
 
         float t = 0f;
         for (int step = 0; step < curvedLength+1; ++step) {
@@ -202,6 +202,23 @@ public class LineGenerator : MonoBehaviour {
         }
 
         return curvedPoints.ToArray();
+    }
+
+    private Vector3[] linearInterpolate(Vector3[] arrayToSmooth, float smoothness) {
+        int points = arrayToSmooth.Length;
+        int smooth = Mathf.Max(1,Mathf.RoundToInt(smoothness));
+        Vector3[] linearPoints = new Vector3[points * smooth];
+
+        for (int i = 0; i < points-1; ++i) {
+            Vector3 from = arrayToSmooth[i];
+            Vector3 to = arrayToSmooth[i+1];
+            Vector3 step = (to - from) / smooth;
+            linearPoints[i * smooth] = arrayToSmooth[i];
+            for (int j = (i * smooth)+1; j < (i+1)*smooth; ++j) 
+                linearPoints[j] = linearPoints[j - 1] + step;
+        }
+        linearPoints[linearPoints.Length-1] = arrayToSmooth[points-1];
+        return linearPoints;
     }
 
     /// <summary>
