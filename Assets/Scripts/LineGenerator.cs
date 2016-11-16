@@ -161,10 +161,10 @@ public class LineGenerator : MonoBehaviour {
             return generateLine(randomLine(numberOfPoints, lines[lines.Count - 1].Value), from, line);
         }
         else if (roll >= 40 && roll < 60) {
-            return generateLine(uLine(4, 10, lines[lines.Count - 1].Value), from, line);
+            return generateLine(uLine(40, 10, lines[lines.Count - 1].Value), from, line);
         }
-        else if (roll >= 60 && roll < 80) {
-            return generateLine(zigZagLine(4, 10, 3, lines[lines.Count - 1].Value), from, line);
+        else if (roll >= 60 && roll < 90) {
+            return generateLine(zigZagLine(4,40, 5, lines[lines.Count - 1].Value), from, line);
         }
         else {
            // return generateLine(zigZagLine(4, 10, 3, lines[lines.Count - 1].Value), from, line);
@@ -189,7 +189,7 @@ public class LineGenerator : MonoBehaviour {
     }
 
     private Vector3[] forkInitLine(Vector3 previousPoint) {
-        Vector3 midPoint = previousPoint + new Vector3(-previousPoint.x, 27, 0);
+        Vector3 midPoint = previousPoint + new Vector3(-previousPoint.x, 7, 0);
         Vector3[] points = new Vector3[] { previousPoint, midPoint, midPoint + new Vector3(0, 8, 0) };
         return points;
     }
@@ -215,14 +215,16 @@ public class LineGenerator : MonoBehaviour {
     /// <returns>The generated line.</returns>
     private Vector3[] uLine(float height, float width, Vector3 previousPoint) {
         Vector3 oppositePoint = previousPoint;
+        height = Mathf.Min(height, Mathf.Abs(screenTop - screenBottom - 2) / 3);
         int direction = (previousPoint.x > 0) ? -1 : 1;
         float distToEdge = (direction == 1) ? Mathf.Abs(screenRightPos - previousPoint.x - xMargin) : Mathf.Abs(previousPoint.x - (xMargin + screenLeftPos));
         width = Mathf.Min(distToEdge, width);
         oppositePoint.x = oppositePoint.x + width * 0.5f * direction;
-        Vector3 middlePoint = new Vector3((oppositePoint.x + previousPoint.x) / 2, previousPoint.y + height, 0);
+        Vector3 middlePoint1 = previousPoint + new Vector3(0, height, 0);
+        Vector3 middlePoint2 = oppositePoint + new Vector3(0, height, 0);
         Vector3 turnPoint = oppositePoint + new Vector3(direction * width * 0.25f, 0, 0);
         Vector3 endPoint = turnPoint + new Vector3(direction * width * 0.25f, 0, 0);
-        Vector3[] line = new Vector3[] { previousPoint, previousPoint + new Vector3(0,5,0), middlePoint, oppositePoint, turnPoint, endPoint, endPoint + new Vector3(0,20,0)};
+        Vector3[] line = new Vector3[] { previousPoint, middlePoint1, middlePoint2, oppositePoint, turnPoint, endPoint, endPoint + new Vector3(0,20,0)};
         return line;
     }
     
@@ -231,8 +233,10 @@ public class LineGenerator : MonoBehaviour {
         points[0] = previousPoint;
         points[1] = previousPoint + new Vector3(0, height, 0);
         int dir = (previousPoint.x > 0) ? -1 : 1;
+        zagWidth = Mathf.Min(zagWidth, Mathf.Abs(screenRightPos - screenLeftPos - 2*xMargin)/2);
         points[1].x = previousPoint.x + dir * zagWidth;
-        points[1].x = Mathf.Clamp(points[1].x, screenLeftPos + xMargin, screenRightPos - xMargin);
+        
+        //points[1].x = Mathf.Clamp(points[1].x, screenLeftPos + xMargin, screenRightPos - xMargin);
         points[2] = points[1] + new Vector3(0, height / 2, 0);
         for (int i = 3; i < zags*2+1; i+=2) {
             dir = -dir;
