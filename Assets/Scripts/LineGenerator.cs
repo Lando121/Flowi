@@ -18,7 +18,8 @@ public class LineGenerator : MonoBehaviour {
     public float lineThickness = 1.0f;
 
     [Header("Scrolling attributes")]
-    public float scrollSpeed = 0.1f;
+    public float startSpeed = 0.1f;
+    private float scrollSpeed;
     public float acceleration = 0.005f;
     public float choiceSnapDistance = 3.0f;
 
@@ -36,9 +37,7 @@ public class LineGenerator : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        //linePositions = new Vector3[numberOfPoints];
-        //line = GetComponent<LineRenderer>();
-        //line.SetVertexCount(numberOfPoints);
+        scrollSpeed = startSpeed;
 
         Vector3 lowerLeft = mainCamera.ScreenToWorldPoint(new Vector3(0, 0, 0));
         Vector3 upperRight = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 0));
@@ -59,14 +58,6 @@ public class LineGenerator : MonoBehaviour {
 
     // Update is called once per frame
     void FixedUpdate () {
-        //line.transform.Translate(0, -scrollSpeed, 0
-        //    scrollSpeed = Mathf.Clamp(scrollSpeed+0.00001f,0,1);
-        foreach (GameObject v in linePositions.Keys) {
-          //  print(linePositions.Keys.Count);
-        }
-        foreach(KeyValuePair<LineRenderer,Vector3> p in lines) {
-            //print(p.Value);
-        }
         updateLines();
         if (nextForkPos != Vector3.zero) {
             float dif = nextForkPos.y + lines[0].Key.gameObject.transform.position.y - screenTop;
@@ -76,6 +67,29 @@ public class LineGenerator : MonoBehaviour {
         }
         if (accelerating) {
             accelerating = accelerate();
+        }
+    }
+
+    /// <summary>
+    /// Iterates over all lines to move them and remove them if outside visible boundary.
+    /// </summary>
+    private void updateLines() {
+        // Check if any line is outside visible boundary
+        for (int i = 0; i < lines.Count; i++) {
+            KeyValuePair<LineRenderer, Vector3> line = lines[i];
+            line.Key.transform.Translate(0, -scrollSpeed, 0);
+            GameObject lineObject = line.Key.gameObject;
+            // If below screen bottom
+            float linePosY = line.Value.y + lineObject.transform.position.y;
+            if (line.Key.gameObject.tag == "MainLine") {
+                if (linePosY < screenTop + generationOffset) {
+                    lines[i] = new KeyValuePair<LineRenderer, Vector3>(line.Key, spawnNewLine(line.Value, line.Key));
+                }
+            } else if (linePosY < screenBottom - pointRemovalOffset) {
+                removeLine(line);
+                break;
+            }
+            
         }
     }
 
@@ -112,18 +126,7 @@ public class LineGenerator : MonoBehaviour {
     /// </summary>
     /// <param name="points"> Positions that the line passes through in order. </param>
     /// <param name="from"> Transform position of the new line. </param>
-    private Vector3 generateLine(Vector3[] points, Vector3 from, LineRenderer line, string tag = "Line") {
-        /* GameObject lineObject = new GameObject();
-            lineObject.tag = tag;
-            LineRenderer newLine = lineObject.AddComponent<LineRenderer>();
-            newLine.SetVertexCount(points.Length);
-            newLine.SetPositions(points);
-            newLine.useWorldSpace = false;
-            lineObject.transform.position = position;
-            Vector3 lastPoint = points[points.Length - 1];
-            // Store the line and its last point to easily determine when its last point is no longer visible.
-            lines.Add(new KeyValuePair<LineRenderer, Vector3>(newLine, lastPoint));
-            linePositions.Add(lastPoint, points);*/
+    private Vector3 generateLine(Vector3[] points, Vector3 from, LineRenderer line, string tag = "MainLine") {
         line.gameObject.tag = tag;
         Vector3[] curPositions = pruneOldPoints(linePositions[line.gameObject], line.gameObject.transform.position);
         Vector3[] mergedLine = new Vector3[curPositions.Length + points.Length];
@@ -156,7 +159,7 @@ public class LineGenerator : MonoBehaviour {
     /// </summary>
     /// <returns>The generated line.</returns>
     private Vector3 spawnNewLine(Vector3 from, LineRenderer line) {
-        float roll = Random.Range(0, 100);
+        float roll = Random.Range(0, 10000);
         if (roll < 40) {
             return generateLine(randomLine(numberOfPoints, lines[lines.Count - 1].Value), from, line);
         }
@@ -268,34 +271,6 @@ public class LineGenerator : MonoBehaviour {
         newLine[points - 1] = newLine[points - 2] + transition;
         return newLine;
     }
-
-    /// <summary>
-    /// Iterates over all lines to move them and remove them if outside visible boundary.
-    /// </summary>
-    private void updateLines() {
-        /*     if (linePositions[1].y + transform.position.y < bottom -1) {
-                 for (int i = 1; i < numberOfPoints; ++i) {
-                     linePositions[i - 1] = linePositions[i];
-                 }
-                 linePositions[numberOfPoints - 1] = generateNewPoint(linePositions[numberOfPoints - 2]);
-                 Vector3[] smoothLine = smoothInterpolate(linePositions, interpolationSmoothness);
-                 line.SetVertexCount(smoothLine.Length);
-                 line.SetPositions(smoothLine);
-             }*/
-        // Move all lines 
-        
-        // Check if any line is outside visible boundary
-        for (int i = 0; i < lines.Count; i++) {
-            KeyValuePair<LineRenderer,Vector3> line = lines[i];
-            line.Key.transform.Translate(0, -scrollSpeed, 0);
-            GameObject lineObject = line.Key.gameObject;
-            // If below screen bottom
-            if (line.Value.y + lineObject.transform.position.y < screenTop + generationOffset && line.Key.gameObject.tag == "Line") {
-                lines[i] = new KeyValuePair<LineRenderer, Vector3>(line.Key, spawnNewLine(line.Value, line.Key));
-            }
-        }
-    }
-
 
     /// <summary>
     /// Generates a point above a previous one, with a random x-value.
@@ -425,13 +400,21 @@ public class LineGenerator : MonoBehaviour {
         foreach (KeyValuePair<LineRenderer,Vector3> l in lines) {
             if (l.Key.gameObject != line.Key.gameObject) {
                 Destroy(l.Key.gameObject);
+                linePositions.Remove(l.Key.gameObject);
             }
         }
         lines.Clear();
         lines.Add(line);
-        line.Key.gameObject.tag = "Line";
-        accelerateTo(0.25f);
+        line.Key.gameObject.tag = "MainLine";
+        accelerateTo(startSpeed);
         nextForkPos = Vector3.zero;
+    }
+
+    private void removeLine(KeyValuePair<LineRenderer, Vector3> line) {
+        GameObject lineObject = line.Key.gameObject;
+        lines.Remove(line);
+        linePositions.Remove(lineObject);
+        Destroy(lineObject);
     }
 
 }
