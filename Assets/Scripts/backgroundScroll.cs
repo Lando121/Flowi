@@ -7,6 +7,9 @@ public class backgroundScroll : MonoBehaviour {
 	private LineGenerator lineGen;
 	private GameObject gObj;
 	public Camera mainCamera;
+
+    private Renderer rend;
+
 	// Use this for initialization
 	void Start () {
 		gObj = GameObject.Find("Smooth Line Renderer");
@@ -17,16 +20,16 @@ public class backgroundScroll : MonoBehaviour {
 		float height = 2 * Camera.main.orthographicSize;
 		float width = height * Camera.main.aspect; 
 		transform.localScale = new Vector3 (width, height, 1);
+        rend = GetComponent<Renderer>();
+        lineGen = gObj.GetComponent<LineGenerator>();
 
+    }
 
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		lineGen = gObj.GetComponent<LineGenerator> ();
+    // Update is called once per frame
+    void Update () {
+        //float scrollSpeed = lineGen.scrollSpeed;
 		Vector3 offset = new Vector3 (0, Time.time * 0.3f, 0);
-		GetComponent<Renderer>().material.mainTextureOffset = offset;
+		rend.material.mainTextureOffset = offset;
 
 
 	}
