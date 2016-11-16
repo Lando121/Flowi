@@ -19,7 +19,7 @@ public class LineGenerator : MonoBehaviour {
 
     [Header("Scrolling attributes")]
     public float startSpeed = 0.1f;
-    private float scrollSpeed;
+    public float scrollSpeed;
     public float acceleration = 0.005f;
     public float choiceSnapDistance = 3.0f;
 
@@ -159,7 +159,7 @@ public class LineGenerator : MonoBehaviour {
     /// </summary>
     /// <returns>The generated line.</returns>
     private Vector3 spawnNewLine(Vector3 from, LineRenderer line) {
-        float roll = Random.Range(0, 10000);
+        float roll = Random.Range(0, 100);
         if (roll < 40) {
             return generateLine(randomLine(numberOfPoints, lines[lines.Count - 1].Value), from, line);
         }
