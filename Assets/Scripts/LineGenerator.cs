@@ -53,7 +53,7 @@ public class LineGenerator : MonoBehaviour {
         Vector3 startPos = new Vector3(0, bottom, 0);
 
         LineRenderer initLine = newLine(new Vector3(0, 0, -1), startPos);
-        lines[0] = new KeyValuePair<LineRenderer,Vector3>(initLine,generateLine(straightLine(startPos, startPos + new Vector3(0, 30, 0)), startPos, initLine));
+        lines[0] = new KeyValuePair<LineRenderer,Vector3>(initLine,generateLine(straightLine(startPos, startPos + new Vector3(0, 30, 0)), initLine));
     }
 
     // Update is called once per frame
@@ -126,7 +126,7 @@ public class LineGenerator : MonoBehaviour {
     /// </summary>
     /// <param name="points"> Positions that the line passes through in order. </param>
     /// <param name="from"> Transform position of the new line. </param>
-    private Vector3 generateLine(Vector3[] points, Vector3 from, LineRenderer line, string tag = "MainLine") {
+    private Vector3 generateLine(Vector3[] points, LineRenderer line, string tag = "MainLine") {
         line.gameObject.tag = tag;
         Vector3[] curPositions = pruneOldPoints(linePositions[line.gameObject], line.gameObject.transform.position);
         Vector3[] mergedLine = new Vector3[curPositions.Length + points.Length];
@@ -159,19 +159,20 @@ public class LineGenerator : MonoBehaviour {
     /// </summary>
     /// <returns>The generated line.</returns>
     private Vector3 spawnNewLine(Vector3 from, LineRenderer line) {
-        float roll = Random.Range(0, 100);
+        float roll = Random.Range(0, 10000);
         if (roll < 40) {
-            return generateLine(randomLine(numberOfPoints, lines[lines.Count - 1].Value), from, line);
+            return generateLine(randomLine(numberOfPoints, lines[lines.Count - 1].Value), line);
         }
         else if (roll >= 40 && roll < 60) {
-            return generateLine(uLine(40, 10, lines[lines.Count - 1].Value), from, line);
+            return generateLine(uLine(40, 10, lines[lines.Count - 1].Value), line);
         }
         else if (roll >= 60 && roll < 90) {
-            return generateLine(zigZagLine(4,40, 5, lines[lines.Count - 1].Value), from, line);
+            return generateLine(zigZagLine(4,40, 5, lines[lines.Count - 1].Value), line);
         }
         else {
-           // return generateLine(zigZagLine(4, 10, 3, lines[lines.Count - 1].Value), from, line);
-            return createFork(from, line);
+            // return generateLine(zigZagLine(4, 10, 3, lines[lines.Count - 1].Value), from, line);
+            //return createFork(from, line);
+            return generateMonsterObstacle(from, 3.0f, line);
         }
     }
 
@@ -181,11 +182,11 @@ public class LineGenerator : MonoBehaviour {
 
     private Vector3 createFork(Vector3 from, LineRenderer line) {
      //   accelerateTo(0.02f);
-        Vector3 forkPos = generateLine(forkInitLine(from), from, line);
+        Vector3 forkPos = generateLine(forkInitLine(from), line);
         LineRenderer leftLine = newLine(line.gameObject.transform.position, forkPos);
-        lines[lines.Count-1] = new KeyValuePair<LineRenderer, Vector3>(leftLine, generateLine(leftChoiceLine(forkPos), from, leftLine, "ChoicePath"));
+        lines[lines.Count-1] = new KeyValuePair<LineRenderer, Vector3>(leftLine, generateLine(leftChoiceLine(forkPos), leftLine, "ChoicePath"));
         LineRenderer rightLine = newLine(line.gameObject.transform.position, forkPos);
-        lines[lines.Count - 1] = new KeyValuePair<LineRenderer, Vector3>(rightLine, generateLine(rightChoiceLine(forkPos), from, rightLine, "ChoicePath"));
+        lines[lines.Count - 1] = new KeyValuePair<LineRenderer, Vector3>(rightLine, generateLine(rightChoiceLine(forkPos), rightLine, "ChoicePath"));
         line.gameObject.tag = "Deactivated";
         nextForkPos = forkPos;
         return forkPos;
@@ -415,6 +416,34 @@ public class LineGenerator : MonoBehaviour {
         lines.Remove(line);
         linePositions.Remove(lineObject);
         Destroy(lineObject);
+    }
+
+    private Vector3 generateMonsterObstacle(Vector3 from, float midWidth, LineRenderer line) {
+        Vector3[] startPos = new Vector3[2];
+        float height = 2 * Camera.main.orthographicSize;
+        float width = height * Camera.main.aspect;
+
+
+        startPos[0] = from;
+        startPos[1] = new Vector3(screenLeftPos + width * 0.5f, from.y + (height * 0.2f), 0);
+
+        Vector3[] midPoints = new Vector3[] { startPos[1], startPos[1] + new Vector3 (0,height * 0.7f,0) };
+        LineRenderer initLine2 = newLine(line.gameObject.transform.position, startPos[1]);
+        initLine2.widthMultiplier = midWidth;
+        lines[lines.Count - 1] = new KeyValuePair<LineRenderer, Vector3>(initLine2, generateLine(midPoints, initLine2));
+
+        Vector3[] endPoints = new Vector3[] { midPoints[1], midPoints[1] + new Vector3(0, height * 0.1f, 0) };
+        LineRenderer initLine3 = newLine(line.gameObject.transform.position, midPoints[1]);
+        lines[lines.Count - 1] = new KeyValuePair<LineRenderer, Vector3>(initLine3, generateLine(endPoints, initLine3));
+        setMainLine(initLine3);
+        return generateLine(startPos, line, "Deactivated");
+    }
+
+    private void setMainLine(LineRenderer line) {
+        foreach (KeyValuePair<LineRenderer,Vector3> l in lines) {
+            l.Key.gameObject.tag = "Deactivated";
+        }
+        line.gameObject.tag = "MainLine";
     }
 
 }
