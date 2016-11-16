@@ -35,6 +35,8 @@ public class LineGenerator : MonoBehaviour {
     private List<KeyValuePair<LineRenderer,Vector3>> lines = new List<KeyValuePair<LineRenderer, Vector3>>();
     private Dictionary<GameObject, Vector3[]> linePositions = new Dictionary<GameObject, Vector3[]>();
 
+    public GameObject monster;
+
 	// Use this for initialization
 	void Start () {
         scrollSpeed = startSpeed;
@@ -159,20 +161,20 @@ public class LineGenerator : MonoBehaviour {
     /// </summary>
     /// <returns>The generated line.</returns>
     private Vector3 spawnNewLine(Vector3 from, LineRenderer line) {
-        float roll = Random.Range(0, 10000);
-        if (roll < 40) {
+        float roll = Random.Range(0, 100);
+        if (roll < 30) {
             return generateLine(randomLine(numberOfPoints, lines[lines.Count - 1].Value), line);
         }
-        else if (roll >= 40 && roll < 60) {
+        else if (roll >= 40 && roll < 50) {
             return generateLine(uLine(40, 10, lines[lines.Count - 1].Value), line);
         }
-        else if (roll >= 60 && roll < 90) {
+        else if (roll >= 50 && roll < 70) {
             return generateLine(zigZagLine(4,40, 5, lines[lines.Count - 1].Value), line);
-        }
-        else {
+        } else if (roll > 70 && roll < 90) {
+            return generateMonsterObstacle(from, Mathf.Abs(screenRightPos - screenLeftPos) - 2 * xMargin, line);
+        } else {
             // return generateLine(zigZagLine(4, 10, 3, lines[lines.Count - 1].Value), from, line);
-            //return createFork(from, line);
-            return generateMonsterObstacle(from, 3.0f, line);
+            return createFork(from, line);
         }
     }
 
@@ -431,6 +433,13 @@ public class LineGenerator : MonoBehaviour {
         LineRenderer initLine2 = newLine(line.gameObject.transform.position, startPos[1]);
         initLine2.widthMultiplier = midWidth;
         lines[lines.Count - 1] = new KeyValuePair<LineRenderer, Vector3>(initLine2, generateLine(midPoints, initLine2));
+
+        for (int i = 0; i < 2; i++) { 
+            Vector3 monsterSpawnPos = new Vector3(Random.Range(-midWidth, midWidth), Random.Range(midPoints[0].y, midPoints[1].y), 0);
+            GameObject newMonster = Instantiate(monster);
+            newMonster.transform.parent = initLine2.transform;
+            newMonster.GetComponent<MonsterController>().initiateMonster(monsterSpawnPos + initLine2.transform.position, 1.0f, -midWidth / 2, midWidth / 2);
+        }
 
         Vector3[] endPoints = new Vector3[] { midPoints[1], midPoints[1] + new Vector3(0, height * 0.1f, 0) };
         LineRenderer initLine3 = newLine(line.gameObject.transform.position, midPoints[1]);
