@@ -1,21 +1,18 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.UI;
+using UnityEngine;
 
 public class LineGenerator : MonoBehaviour {
-    
+
     public Camera mainCamera;
 
-    [Header("Line generation attributes")]
-    public int numberOfPoints = 10;
-    public float startLineLength = 10.0f;
+    private List<Line> lines = new List<Line>();
+
     public float xMargin = 0.5f;
     public float yStep = 0.5f;
-   //    public float interpolationSmoothness = 1.0f;
-    public float pointRemovalOffset = 10.0f;
-    public float generationOffset = 10.0f;
+
     public float lineThickness = 1.0f;
+
 
     [Header("Scrolling attributes")]
     public float startSpeed = 0.1f;
@@ -27,72 +24,34 @@ public class LineGenerator : MonoBehaviour {
     private bool accelerating = false;
     private float targetSpeed;
 
-    public Material lineMaterial;
-
     private Vector3 nextForkPos;
-    private float screenLeftPos, screenRightPos, screenTop, screenBottom;
-
-    private List<KeyValuePair<LineRenderer,Vector3>> lines = new List<KeyValuePair<LineRenderer, Vector3>>();
-    private Dictionary<GameObject, Vector3[]> linePositions = new Dictionary<GameObject, Vector3[]>();
 
     public GameObject monster;
+    public GameObject LinePrefab;
+    private LineTypes lineTypes;
 
-	// Use this for initialization
-	void Start () {
+    private float screenLeft, screenRight, screenTop, screenBottom, screenWidth, screenHeight;
+
+    private Line mainLine;
+
+    // Use this for initialization
+    void Start() {
+        lineTypes = GetComponent<LineTypes>();
+
         scrollSpeed = startSpeed;
 
         Vector3 lowerLeft = mainCamera.ScreenToWorldPoint(new Vector3(0, 0, 0));
         Vector3 upperRight = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 0));
 
-        screenLeftPos = lowerLeft.x;
-        screenRightPos = upperRight.x;
+        screenLeft = lowerLeft.x;
+        screenRight = upperRight.x;
         screenTop = upperRight.y;
         screenBottom = lowerLeft.y;
-        nextForkPos = Vector3.zero;
+        screenWidth = Mathf.Abs(screenRight - screenLeft);
+        screenHeight = Mathf.Abs(screenTop - screenBottom);
 
-        float bottom = mainCamera.ScreenToWorldPoint(new Vector3(0,0,0)).y;
+        createLine(lineTypes.straightLine(new Vector3(0, screenBottom, 0), new Vector3(0, screenBottom + screenHeight * 2, 0)), lineThickness);
 
-        Vector3 startPos = new Vector3(0, bottom, 0);
-
-        LineRenderer initLine = newLine(new Vector3(0, 0, -1), startPos);
-        lines[0] = new KeyValuePair<LineRenderer,Vector3>(initLine,generateLine(straightLine(startPos, startPos + new Vector3(0, 30, 0)), initLine));
-    }
-
-    // Update is called once per frame
-    void FixedUpdate () {
-        updateLines();
-        if (nextForkPos != Vector3.zero) {
-            float dif = nextForkPos.y + lines[0].Key.gameObject.transform.position.y - screenTop;
-            if (dif < -0.5f*(screenTop-screenBottom)) {
-                accelerateTo(0.0f);
-            }
-        }
-        if (accelerating) {
-            accelerating = accelerate();
-        }
-    }
-
-    /// <summary>
-    /// Iterates over all lines to move them and remove them if outside visible boundary.
-    /// </summary>
-    private void updateLines() {
-        // Check if any line is outside visible boundary
-        for (int i = 0; i < lines.Count; i++) {
-            KeyValuePair<LineRenderer, Vector3> line = lines[i];
-            line.Key.transform.Translate(0, -scrollSpeed, 0);
-            GameObject lineObject = line.Key.gameObject;
-            // If below screen bottom
-            float linePosY = line.Value.y + lineObject.transform.position.y;
-            if (line.Key.gameObject.tag == "MainLine") {
-                if (linePosY < screenTop + generationOffset) {
-                    lines[i] = new KeyValuePair<LineRenderer, Vector3>(line.Key, spawnNewLine(line.Value, line.Key));
-                }
-            } else if (linePosY < screenBottom - pointRemovalOffset) {
-                removeLine(line);
-                break;
-            }
-            
-        }
     }
 
     private bool accelerate() {
@@ -107,234 +66,59 @@ public class LineGenerator : MonoBehaviour {
         accelerationMult = (speed > scrollSpeed) ? 1 : -1;
     }
 
-    private LineRenderer newLine(Vector3 position, Vector3 startPoint) {
-        GameObject lineObject = new GameObject();
-        LineRenderer newLine = lineObject.AddComponent<LineRenderer>();
-        newLine.widthMultiplier = lineThickness;
-        newLine.material = lineMaterial;
-        Vector3[] points = new Vector3[] { startPoint };
-        newLine.SetPositions(points);
-        newLine.useWorldSpace = false;
-        lineObject.transform.position = position;
-        Vector3 lastPoint = points[points.Length - 1];
-        // Store the line and its last point to easily determine when its last point is no longer visible.
-        lines.Add(new KeyValuePair<LineRenderer, Vector3>(newLine, lastPoint));
-        linePositions.Add(lineObject, points);
+    // Update is called once per frame
+    void FixedUpdate() {
+        lineTypes.setScreenVariables(screenTop, screenBottom, screenRight, screenLeft, xMargin);
+        updateLines();
+        if (nextForkPos != Vector3.zero) {
+            float dif = nextForkPos.y + mainLine.transform.position.y - screenTop;
+            if (dif < -0.5f * screenHeight) {
+                accelerateTo(0.0f);
+            }
+        }
+        if (accelerating) {
+            accelerating = accelerate();
+        }
+    }
+
+    private Line createLine(Vector3[] points, float thickness, string tag = "Line") {
+        Vector3 offset = new Vector3(0, 0, -1);
+        GameObject newLineObject = Instantiate(LinePrefab, offset, Quaternion.identity);
+        Line newLine = newLineObject.GetComponent<Line>();
+        newLine.setThickness(thickness);
+        newLine.transform.tag = tag;
+        newLine.drawLine(points);
+        newLine.setSpeed(scrollSpeed);
+        if (lines.Count == 0) {
+            mainLine = newLine;
+        }
+        lines.Add(newLine);
         return newLine;
     }
 
-    /// <summary>
-    /// Generates a new line and adds it to the list of currently active lines.
-    /// </summary>
-    /// <param name="points"> Positions that the line passes through in order. </param>
-    /// <param name="from"> Transform position of the new line. </param>
-    private Vector3 generateLine(Vector3[] points, LineRenderer line, string tag = "MainLine") {
-        line.gameObject.tag = tag;
-        Vector3[] curPositions = pruneOldPoints(linePositions[line.gameObject], line.gameObject.transform.position);
-        Vector3[] mergedLine = new Vector3[curPositions.Length + points.Length];
-        System.Array.Copy(curPositions, mergedLine, curPositions.Length);
-        System.Array.Copy(points, 0, mergedLine, curPositions.Length, points.Length);
-        linePositions.Remove(line.gameObject);
-        linePositions.Add(line.gameObject, mergedLine);
-        line.numPositions = mergedLine.Length;
-        line.SetPositions(mergedLine);
-
-        return mergedLine[mergedLine.Length - 1];
+    public void removeLine(Line line) {
+        lines.Remove(line);
     }
 
-    private Vector3[] pruneOldPoints(Vector3[] points, Vector3 offset) {
-        int maxY = int.MinValue;
-        List<Vector3> keep = new List<Vector3>();
-        for (int i = 0; i < points.Length-1; i++) {
-            Vector3 pos = points[i];
-            maxY = Mathf.RoundToInt(Mathf.Max(maxY, (pos + offset).y));
-            float cutoffPoint = screenBottom - pointRemovalOffset;
-            if ((points[i+1] + offset).y >=  cutoffPoint || (Mathf.RoundToInt((points[i+1] + offset).y) > maxY && maxY > cutoffPoint)) { 
-                keep.Add(pos);
-            }
+    private void updateLines() {
+        foreach (Line line in lines) {
+            line.setSpeed(scrollSpeed);
         }
-        return keep.ToArray();
-    }
-
-    /// <summary>
-    /// Generates a new line and chooses the type of line it should be.
-    /// </summary>
-    /// <returns>The generated line.</returns>
-    private Vector3 spawnNewLine(Vector3 from, LineRenderer line) {
-        float roll = Random.Range(0, 100);
-        if (roll < 30) {
-            return generateLine(randomLine(numberOfPoints, lines[lines.Count - 1].Value), line);
-        }
-        else if (roll >= 30 && roll < 40) {
-            return generateLine(uLine(40, 10, lines[lines.Count - 1].Value), line);
-        }
-        else if (roll >= 50 && roll < 60) {
-            return generateLine(zigZagLine(4,40, 5, lines[lines.Count - 1].Value), line);
-        } else if (roll > 60 && roll < 90) {
-            return generateMonsterObstacle(from, Mathf.Abs(screenRightPos - screenLeftPos) - 2 * xMargin, 2, line);
-        } else {
-            // return generateLine(zigZagLine(4, 10, 3, lines[lines.Count - 1].Value), from, line);
-            return createFork(from, line);
+        if (mainLine != null && mainLine.endPoint.y + mainLine.transform.position.y < screenTop + screenHeight / 3 && mainLine.shouldGenerate) {
+            generateFurther();
         }
     }
 
-    private Vector3[] straightLine(Vector3 from, Vector3 to) {
-        return new Vector3[] { from, to };
-    }
-
-    private Vector3 createFork(Vector3 from, LineRenderer line) {
-     //   accelerateTo(0.02f);
-        Vector3 forkPos = generateLine(forkInitLine(from), line);
-        LineRenderer leftLine = newLine(line.gameObject.transform.position, forkPos);
-        lines[lines.Count-1] = new KeyValuePair<LineRenderer, Vector3>(leftLine, generateLine(leftChoiceLine(forkPos), leftLine, "ChoicePath"));
-        LineRenderer rightLine = newLine(line.gameObject.transform.position, forkPos);
-        lines[lines.Count - 1] = new KeyValuePair<LineRenderer, Vector3>(rightLine, generateLine(rightChoiceLine(forkPos), rightLine, "ChoicePath"));
-        line.gameObject.tag = "Deactivated";
-        nextForkPos = forkPos;
-        return forkPos;
-    }
-
-    private Vector3[] forkInitLine(Vector3 previousPoint) {
-        Vector3 midPoint = previousPoint + new Vector3(-previousPoint.x, 7, 0);
-        Vector3[] points = new Vector3[] { previousPoint, midPoint, midPoint + new Vector3(0, 8, 0) };
-        return points;
-    }
-
-    private Vector3[] rightChoiceLine(Vector3 previousPoint) {
-        Vector3 rightPoint = previousPoint + new Vector3(Mathf.Abs(previousPoint.x - screenLeftPos) / 1.5f, 3, 0);
-        Vector3[] points = new Vector3[] { previousPoint, rightPoint, rightPoint + new Vector3(0, Mathf.Abs(screenBottom-screenTop)*1.2f, 0) };
-        return points;
-    }
-
-    private Vector3[] leftChoiceLine(Vector3 previousPoint) {
-        Vector3 leftPoint = previousPoint + new Vector3(-Mathf.Abs(previousPoint.x - screenLeftPos)/1.5f,3,0);
-        Vector3[] points = new Vector3[] { previousPoint, leftPoint, leftPoint + new Vector3(0, Mathf.Abs(screenBottom - screenTop) * 1.2f,0) };
-        return points;
-    }
-
-    /// <summary>
-    /// Generates an inverse U-shaped line.
-    /// </summary>
-    /// <param name="height">Height of the turn.</param>
-    /// <param name="width">Width of the turn.</param>
-    /// <param name="previousPoint">Point that the line starts from.</param>
-    /// <returns>The generated line.</returns>
-    private Vector3[] uLine(float height, float width, Vector3 previousPoint) {
-        Vector3 oppositePoint = previousPoint;
-        height = Mathf.Min(height, Mathf.Abs(screenTop - screenBottom - 2) / 3);
-        int direction = (previousPoint.x > 0) ? -1 : 1;
-        float distToEdge = (direction == 1) ? Mathf.Abs(screenRightPos - previousPoint.x - xMargin) : Mathf.Abs(previousPoint.x - (xMargin + screenLeftPos));
-        width = Mathf.Min(distToEdge, width);
-        oppositePoint.x = oppositePoint.x + width * 0.5f * direction;
-        Vector3 middlePoint1 = previousPoint + new Vector3(0, height, 0);
-        Vector3 middlePoint2 = oppositePoint + new Vector3(0, height, 0);
-        Vector3 turnPoint = oppositePoint + new Vector3(direction * width * 0.25f, 0, 0);
-        Vector3 endPoint = turnPoint + new Vector3(direction * width * 0.25f, 0, 0);
-        Vector3[] line = new Vector3[] { previousPoint, middlePoint1, middlePoint2, oppositePoint, turnPoint, endPoint, endPoint + new Vector3(0,20,0)};
-        return line;
-    }
-    
-    private Vector3[] zigZagLine(float height, float zagWidth, int zags, Vector3 previousPoint) {
-        Vector3[] points = new Vector3[zags*2+2];
-        points[0] = previousPoint;
-        points[1] = previousPoint + new Vector3(0, height, 0);
-        int dir = (previousPoint.x > 0) ? -1 : 1;
-        zagWidth = Mathf.Min(zagWidth, Mathf.Abs(screenRightPos - screenLeftPos - 2*xMargin)/2);
-        points[1].x = previousPoint.x + dir * zagWidth;
-        
-        //points[1].x = Mathf.Clamp(points[1].x, screenLeftPos + xMargin, screenRightPos - xMargin);
-        points[2] = points[1] + new Vector3(0, height / 2, 0);
-        for (int i = 3; i < zags*2+1; i+=2) {
-            dir = -dir;
-            points[i] = points[i - 1] + new Vector3(0, height, 0);
-            points[i].x = points[i].x + dir * zagWidth;
-            points[i + 1] = points[i] + new Vector3(0, height / 2, 0);
-        }
-        points[zags*2 + 1] = points[zags*2] + new Vector3(0, height/2, 0);
-        return points;
-    }
-
-    /// <summary>
-    /// Generates a randomly shaped line going upwards.
-    /// </summary>
-    /// <param name="points">Amount of points the line should contain.</param>
-    /// <param name="previousPoint">Point that the line starts from.</param>
-    /// <returns>The generated line.</returns>
-    private Vector3[] randomLine(int points, Vector3 previousPoint) {
-        if (points <= 1)
-            return null;
-        Vector3 transition = new Vector3(0, 3, 0);
-        Vector3[] newLine = new Vector3[points];
-        newLine[0] = previousPoint;
-        newLine[1] = previousPoint + transition;
-
-        for (int i = 2; i < points-1; ++i) {
-            newLine[i] = generateNewPoint(newLine[i - 1]);
-        }
-        newLine[points - 1] = newLine[points - 2] + transition;
-        return newLine;
-    }
-
-    /// <summary>
-    /// Generates a point above a previous one, with a random x-value.
-    /// </summary>
-    /// <param name="previousPoint">Previous point to step from.</param>
-    /// <returns>The new point.</returns>
-    private Vector3 generateNewPoint(Vector3 previousPoint) {
-        float yIncrease = yStep;
-        Vector3 newPoint = previousPoint + new Vector3(Random.Range(-2.0f, 2.0f), yIncrease, 0);
-        newPoint.x = Mathf.Clamp(newPoint.x, screenLeftPos + xMargin, screenRightPos - xMargin);
-        //float xPos = Random.Range(xMargin - screenRightPos, screenRightPos- xMargin);
-        //float xPos = Mathf.Clamp(3.0f*Mathf.Sin(previousPoint.y), xMargin - screenWidth, screenWidth - xMargin);
-        return newPoint;
-    }
-
-    /// <summary>
-    /// Interpolates across a set of points, creating a smooth curved line between them. 
-    /// </summary>
-    /// <param name="arrayToCurve">Set to interpolate.</param>
-    /// <param name="smoothness">Smoothness factor.</param>
-    /// <returns>The interpolated positions.</returns>
-    private Vector3[] smoothInterpolate(Vector3[] arrayToCurve, float smoothness) {
-        int numberOfPoints = arrayToCurve.Length;
-        smoothness = Mathf.Max(1.0f, smoothness);
-        int curvedLength = numberOfPoints * Mathf.RoundToInt(smoothness) - 1;
-        List<Vector3> points;
-        List<Vector3> curvedPoints = new List<Vector3>(curvedLength);
-
-
-        float t = 0f;
-        for (int step = 0; step < curvedLength+1; ++step) {
-            t = Mathf.InverseLerp(0, curvedLength, step);
-
-            points = new List<Vector3>(arrayToCurve);
-
-            for (int j = numberOfPoints-1; j > 0; j--) {
-                for (int i = 0; i < j; i++) {
-                    points[i] = (1 - t) * points[i] + t * points[i + 1];
-                }
-            }
-            curvedPoints.Add(points[0]);
-        }
-
-        return curvedPoints.ToArray();
-    }
-
-    private Vector3[] linearInterpolate(Vector3[] arrayToSmooth, float smoothness) {
-        int points = arrayToSmooth.Length;
-        int smooth = Mathf.Max(1,Mathf.RoundToInt(smoothness));
-        Vector3[] linearPoints = new Vector3[points * smooth];
-
-        for (int i = 0; i < points-1; ++i) {
-            Vector3 from = arrayToSmooth[i];
-            Vector3 to = arrayToSmooth[i+1];
-            Vector3 step = (to - from) / smooth;
-            linearPoints[i * smooth] = arrayToSmooth[i];
-            for (int j = (i * smooth)+1; j < (i+1)*smooth; ++j) 
-                linearPoints[j] = linearPoints[j - 1] + step;
-        }
-        linearPoints[linearPoints.Length-1] = arrayToSmooth[points-1];
-        return linearPoints;
+    private Vector3[] createFork(Vector3 from) {
+        //   accelerateTo(0.02f);
+        Vector3[] initLine = lineTypes.forkInitLine(from);
+        Vector3 offset = mainLine.transform.position;
+        offset.z = 0;
+        Vector3 forkPos = initLine[initLine.Length - 1] + offset;
+        createLine(lineTypes.leftChoiceLine(forkPos), lineThickness, "ChoicePath");
+        createLine(lineTypes.rightChoiceLine(forkPos), lineThickness, "ChoicePath");
+        nextForkPos = forkPos - offset;
+        return initLine;
     }
 
     /// <summary>
@@ -343,7 +127,7 @@ public class LineGenerator : MonoBehaviour {
     /// <param name="position">Position in pixel-space.</param>
     /// <returns>Distance to line.</returns>
     public float distanceToLine(Vector2 position) {
-        return distanceToLine(mainCamera.ScreenToWorldPoint(new Vector3(position.x,position.y,mainCamera.nearClipPlane)));
+        return distanceToLine(mainCamera.ScreenToWorldPoint(new Vector3(position.x, position.y, mainCamera.nearClipPlane)));
     }
 
     /// <summary>
@@ -355,24 +139,24 @@ public class LineGenerator : MonoBehaviour {
         position.z = -1;
         float minDist = float.MaxValue;
         float distToOriginLine = float.MaxValue;
-        KeyValuePair<LineRenderer,Vector3> closestLine = lines[0];
-        foreach (KeyValuePair<LineRenderer, Vector3> line in lines) {
-            GameObject lineObject = line.Key.gameObject;
-            Vector3[] points = linePositions[lineObject];
-            Vector3 offset = lineObject.transform.position;
-            for (int i = 0; i < points.Length-1; ++i) {
+        Line closestLine = mainLine;
+        foreach (Line line in lines) {
+            Vector3[] points = line.points;
+            Vector3 offset = line.transform.position;
+            for (int i = 0; i < points.Length - 1; ++i) {
                 Vector3 dir = points[i + 1] - points[i];
-                float distToPoint = DistancePointLine(position,points[i]+offset,points[i+1]+offset);
+                float distToPoint = DistancePointLine(position, points[i] + offset, points[i + 1] + offset);
                 //float distToPoint = Mathf.Abs((position - (points[i] + offset)).magnitude);
                 if (distToPoint < minDist) {
                     minDist = distToPoint;
                     closestLine = line;
                 }
-                distToOriginLine = (lineObject.tag == "Deactivated") ? Mathf.Min(distToPoint, distToOriginLine) : distToOriginLine;
+                distToOriginLine = (line == mainLine) ? Mathf.Min(distToPoint, distToOriginLine) : distToOriginLine;
             }
         }
-        if (minDist <= 1.0f && distToOriginLine > choiceSnapDistance)
-          checkChoiceLine(closestLine);
+        if (minDist <= 2.0f && distToOriginLine > choiceSnapDistance) {
+            checkChoiceLine(closestLine);
+        }
         return minDist;
     }
 
@@ -391,66 +175,80 @@ public class LineGenerator : MonoBehaviour {
         return (lineStart + ((Vector3)(lhs * num2)));
     }
 
-    private void checkChoiceLine(KeyValuePair<LineRenderer,Vector3> line) {
-        GameObject lineObject = line.Key.gameObject;
-        if (lineObject.tag == "ChoicePath") {
+    private void checkChoiceLine(Line line) {
+        if (line.transform.tag == "ChoicePath") {
             chooseLine(line);
-        //    generateLine(randomLine(numberOfPoints, line.Value),lineObject.transform.position);
+            //    generateLine(randomLine(numberOfPoints, line.Value),lineObject.transform.position);
         }
     }
 
-    private void chooseLine(KeyValuePair<LineRenderer,Vector3> line) {
-        foreach (KeyValuePair<LineRenderer,Vector3> l in lines) {
-            if (l.Key.gameObject != line.Key.gameObject) {
-                Destroy(l.Key.gameObject);
-                linePositions.Remove(l.Key.gameObject);
+    private void chooseLine(Line line) {
+        mainLine = line;
+        foreach (Line l in lines) {
+            if (l != line) {
+                Destroy(l.gameObject);
             }
         }
         lines.Clear();
-        lines.Add(line);
-        line.Key.gameObject.tag = "MainLine";
+        lines.Add(mainLine);
+        line.transform.tag = "Line";
         accelerateTo(startSpeed);
         nextForkPos = Vector3.zero;
     }
 
-    private void removeLine(KeyValuePair<LineRenderer, Vector3> line) {
-        GameObject lineObject = line.Key.gameObject;
-        lines.Remove(line);
-        linePositions.Remove(lineObject);
-        Destroy(lineObject);
+    /// <summary>
+    /// Generates a new line and chooses the type of line it should be.
+    /// </summary>
+    /// <returns>The generated line.</returns>
+    private void generateFurther() {
+        float roll = Random.Range(0, 100);
+        Vector3[] addedLine;
+        Line line = mainLine;
+        Vector3 from = line.endPoint;
+        if (roll < 30) {
+            addedLine = lineTypes.randomLine(10, from, 3);
+        }
+        else if (roll >= 30 && roll < 40) {
+            addedLine = lineTypes.uLine(40, 10, from);
+        }
+        else if (roll >= 50 && roll < 60) {
+            addedLine = lineTypes.zigZagLine(4, 40, 5, from);
+        }
+        else if (roll > 60 && roll < 90) {
+            addedLine = generateMonsterObstacle(from, screenWidth * 0.9f, 2);
+            // return generateMonsterObstacle(from, Mathf.Abs(screenRightPos - screenLeftPos) - 2 * xMargin, 2, line);
+        }
+        else {
+            addedLine = createFork(from);
+            mainLine.shouldGenerate = false;
+            // return generateLine(zigZagLine(4, 10, 3, lines[lines.Count - 1].Value), from, line);
+            //return createFork(from, line);
+        }
+        line.drawLine(addedLine);
     }
 
-    private Vector3 generateMonsterObstacle(Vector3 from, float midWidth, int monsterCount, LineRenderer line) {
-        float height = 2 * Camera.main.orthographicSize;
-        float width = height * Camera.main.aspect;
+    private Vector3[] generateMonsterObstacle(Vector3 from, float midWidth, int monsterCount) {
 
-        Vector3 startPoint = new Vector3(screenLeftPos + width * 0.5f, from.y + (height * 0.2f), 0);
-        Vector3[] startPos = new Vector3[] {from,  startPoint, startPoint + new Vector3(0,5,0) };
+        midWidth = Mathf.Clamp(midWidth, 0, screenWidth - 2 * xMargin);
+        Vector3 startPoint = new Vector3(screenLeft + screenWidth * 0.5f, from.y + (screenHeight * 0.2f), 0);
+        Vector3[] startPos = new Vector3[] { from, startPoint, startPoint + new Vector3(0, 5, 0) };
 
-        Vector3[] midPoints = new Vector3[] { startPos[startPos.Length - 1], startPos[startPos.Length - 1] + new Vector3 (0,height * 0.7f,0) };
-        LineRenderer initLine2 = newLine(line.gameObject.transform.position, startPos[startPos.Length-1]);
-        initLine2.widthMultiplier = midWidth;
-        lines[lines.Count - 1] = new KeyValuePair<LineRenderer, Vector3>(initLine2, generateLine(midPoints, initLine2));
+        Vector3[] midPoints = new Vector3[] { startPos[startPos.Length - 1] + mainLine.transform.position, startPos[startPos.Length - 1] + mainLine.transform.position + new Vector3(0, screenHeight * 0.7f, 0) };
 
-        for (int i = 0; i < monsterCount; i++) { 
-            Vector3 monsterSpawnPos = new Vector3(Random.Range(-midWidth, midWidth), Random.Range(midPoints[0].y, midPoints[1].y), 0);
+        Line monsterLine = createLine(midPoints, midWidth);
+
+        for (int i = 0; i < monsterCount; i++) {
+            Vector3 monsterSpawnPos = new Vector3(Random.Range(-midWidth, midWidth), Random.Range(midPoints[0].y, midPoints[1].y), -1);
             GameObject newMonster = Instantiate(monster);
-            newMonster.transform.parent = initLine2.transform;
-            newMonster.GetComponent<MonsterController>().initiateMonster(monsterSpawnPos + initLine2.transform.position, 1.0f, -midWidth / 2, midWidth / 2);
+            newMonster.transform.parent = monsterLine.transform;
+            monster.transform.position = new Vector3(0, 0, -1);
+            newMonster.GetComponent<MonsterController>().initiateMonster(monsterSpawnPos + monsterLine.transform.position, 1.0f, -midWidth / 2, midWidth / 2);
         }
 
-        Vector3[] endPoints = new Vector3[] { midPoints[midPoints.Length-1], midPoints[midPoints.Length-1] + new Vector3(0, height * 0.1f, 0) };
-        LineRenderer initLine3 = newLine(line.gameObject.transform.position, midPoints[1]);
-        lines[lines.Count - 1] = new KeyValuePair<LineRenderer, Vector3>(initLine3, generateLine(endPoints, initLine3));
-        setMainLine(initLine3);
-        return generateLine(startPos, line, "Deactivated");
-    }
-
-    private void setMainLine(LineRenderer line) {
-        foreach (KeyValuePair<LineRenderer,Vector3> l in lines) {
-            l.Key.gameObject.tag = "Deactivated";
-        }
-        line.gameObject.tag = "MainLine";
+        Vector3[] endPoints = new Vector3[] { midPoints[midPoints.Length - 1], midPoints[midPoints.Length - 1] + new Vector3(0, screenHeight * 0.1f, 0) };
+        Line endLine = createLine(endPoints, lineThickness);
+        mainLine = endLine;
+        return startPos;
     }
 
 }
