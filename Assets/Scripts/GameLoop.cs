@@ -25,7 +25,7 @@ public class GameLoop : MonoBehaviour {
     private float distanceToLine;
     // Use this for initialization
     void Start () {
-       
+
         multiplierText.text = "Multiplier: ";
         hitPercentageText.text = "";
         line = lineObject.GetComponent<LineGenerator>();
@@ -98,18 +98,17 @@ public class GameLoop : MonoBehaviour {
 
             tmpLineTime = 0;
             multiplierTime = 0;
-
         }
     }
-    public void pauseGame()
-    {
+   
+    public void pauseGame() {
         playing = false;
 
     }
 
     public void resumeGame()
     {
-        if(Time.realtimeSinceStartup - tmpCounterTime > resumeCounter)
+        if (Time.realtimeSinceStartup - tmpCounterTime > resumeCounter)
         {
             resumingGame = false;
             playing = true;
