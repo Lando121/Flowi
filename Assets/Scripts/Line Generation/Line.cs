@@ -11,31 +11,46 @@ public class Line : MonoBehaviour {
     public float scrollSpeed;
     public float screenBottom;
 
+    public float lineDifficulty = 1.0f;
+    public float distanceToFork = 300;
+    public float initWidth = 2.0f;
+    public float lineWidth = 2.0f;
+
     public float pointRemovalOffset = 10.0f;
     public float generationOffset = 10.0f;
     private float thickness = 1.0f;
     public bool shouldGenerate = true;
+    public bool shouldFork = false;
+
+    private Renderer rend;
 
     // Use this for initialization
-    void Start () {
-        line = GetComponent<LineRenderer>();	
-	}
+    void Start() {
+        line = GetComponent<LineRenderer>();
+        line.numCornerVertices = 5;
+    }
 
     // Update is called once per frame
     void Update() {
-        if (GameLoop.playing)
-        {
+        if (GameLoop.playing) {
             points = pruneOldPoints(points, transform.position);
             line.numPositions = points.Length;
             line.SetPositions(points);
             line.widthMultiplier = thickness;
-            transform.Translate(0, -scrollSpeed, 0);
-            if (endPoint.y + transform.position.y < screenBottom - pointRemovalOffset)
-            {
+            float travelDist = scrollSpeed * Time.deltaTime;
+            transform.Translate(0, -travelDist, 0);
+            distanceToFork -= travelDist;
+            line.widthMultiplier = lineWidth;
+            shouldFork = (distanceToFork <= 0) ? true : false;
+            if (endPoint.y + transform.position.y < screenBottom - pointRemovalOffset) {
                 die();
             }
         }
-       
+
+    }
+
+    public void setDifficulty(float newDif) {
+        lineDifficulty = newDif;
     }
 
     private void die() {
