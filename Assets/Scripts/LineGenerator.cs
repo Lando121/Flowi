@@ -228,10 +228,10 @@ public class LineGenerator : MonoBehaviour {
             addedLine = createFork(from);
             mainLine.shouldGenerate = false;
         }
-        else if (roll < 6) {
+        else if (roll < 600) {
             addedLine = lineTypes.randomLine(10, from, 3);
         }
-        else if (roll < 9) {
+        else if (roll < 900) {
             addedLine = lineTypes.zigZagLine(4, 40, 2 + Mathf.RoundToInt(mainLine.lineDifficulty), from);
         }
         else if (roll < 1300) {
