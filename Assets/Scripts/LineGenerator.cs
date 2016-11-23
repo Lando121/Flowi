@@ -77,7 +77,7 @@ public class LineGenerator : MonoBehaviour {
     // Update is called once per frame
     void FixedUpdate() {
         if (GameLoop.playing) {
-            xMargin = mainLine.lineWidth / 2;
+            xMargin = mainLine.lineWidth / 2 + screenWidth/10;
             lineThickness = startThickness - mainLine.lineDifficulty * 0.2f;
             lineTypes.setScreenVariables(screenTop, screenBottom, screenRight, screenLeft, xMargin);
             updateLines();
@@ -228,10 +228,10 @@ public class LineGenerator : MonoBehaviour {
             addedLine = createFork(from);
             mainLine.shouldGenerate = false;
         }
-        else if (roll < 600) {
+        else if (roll < 6) {
             addedLine = lineTypes.randomLine(10, from, 3);
         }
-        else if (roll < 900) {
+        else if (roll < 9) {
             addedLine = lineTypes.zigZagLine(4, 40, 2 + Mathf.RoundToInt(mainLine.lineDifficulty), from);
         }
         else if (roll < 1300) {
@@ -256,10 +256,9 @@ public class LineGenerator : MonoBehaviour {
 
 
         for (int i = 0; i < monsterCount; i++) {
-            Vector3 monsterSpawnPos = new Vector3(Random.Range(-midWidth, midWidth), Random.Range(midPoints[0].y, midPoints[1].y), -1);
+            Vector3 monsterSpawnPos = new Vector3(Random.Range(-midWidth, midWidth), Random.Range(midPoints[0].y, midPoints[1].y), -1.5f);
             GameObject newMonster = Instantiate(monster);
             newMonster.transform.parent = monsterLine.transform;
-            monster.transform.position = new Vector3(0, 0, -1);
             newMonster.GetComponent<MonsterController>().initiateMonster(monsterSpawnPos + monsterLine.transform.position, 1.0f, -midWidth / 2, midWidth / 2);
         }
 
