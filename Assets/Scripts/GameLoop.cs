@@ -28,12 +28,14 @@ public class GameLoop : MonoBehaviour {
         Vector2 mousePos = Input.mousePosition;
         float distanceToLine;
         distanceToLine = line.distanceToLine(mousePos);
-        multiplierText.text = "Multiplier: " + multiplier.ToString("0.0");
+        //multiplierText.text = Input.GetTouch(0).position.ToString();
+        //multiplierText.text = "Multiplier: " + multiplier.ToString("0.0");
         hitPercentageText.text = "MissPercentage: " + hitPercentage.ToString("0.00");
-        if (Input.touchCount != 1)
+        if (Input.touchCount == 1)
         {
             pauseGame();
         }
+       
         if (playing)
         {
             
