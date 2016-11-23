@@ -68,17 +68,24 @@ public class LineGenerator : MonoBehaviour {
 
     // Update is called once per frame
     void FixedUpdate() {
-        lineTypes.setScreenVariables(screenTop, screenBottom, screenRight, screenLeft, xMargin);
-        updateLines();
-        if (nextForkPos != Vector3.zero) {
-            float dif = nextForkPos.y + mainLine.transform.position.y - screenTop;
-            if (dif < -0.5f * screenHeight) {
-                accelerateTo(0.0f);
+        if (GameLoop.playing)
+        {
+            lineTypes.setScreenVariables(screenTop, screenBottom, screenRight, screenLeft, xMargin);
+            updateLines();
+            if (nextForkPos != Vector3.zero)
+            {
+                float dif = nextForkPos.y + mainLine.transform.position.y - screenTop;
+                if (dif < -0.5f * screenHeight)
+                {
+                    accelerateTo(0.0f);
+                }
+            }
+            if (accelerating)
+            {
+                accelerating = accelerate();
             }
         }
-        if (accelerating) {
-            accelerating = accelerate();
-        }
+        
     }
 
     private Line createLine(Vector3[] points, float thickness, string tag = "Line") {

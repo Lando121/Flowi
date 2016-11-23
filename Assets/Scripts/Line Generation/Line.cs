@@ -23,14 +23,19 @@ public class Line : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        points = pruneOldPoints(points,transform.position);
-        line.numPositions = points.Length;
-        line.SetPositions(points);
-        line.widthMultiplier = thickness;
-        transform.Translate(0, -scrollSpeed, 0);
-        if (endPoint.y + transform.position.y < screenBottom - pointRemovalOffset) {
-            die();
+        if (GameLoop.playing)
+        {
+            points = pruneOldPoints(points, transform.position);
+            line.numPositions = points.Length;
+            line.SetPositions(points);
+            line.widthMultiplier = thickness;
+            transform.Translate(0, -scrollSpeed, 0);
+            if (endPoint.y + transform.position.y < screenBottom - pointRemovalOffset)
+            {
+                die();
+            }
         }
+       
     }
 
     private void die() {

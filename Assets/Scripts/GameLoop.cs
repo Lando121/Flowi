@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public class LineHitDetection : MonoBehaviour {
+public class GameLoop : MonoBehaviour {
+    public static bool playing = false;
     public GameObject lineObject;
     private LineGenerator line;
     public float multiplier = 0;
@@ -29,8 +30,13 @@ public class LineHitDetection : MonoBehaviour {
         distanceToLine = line.distanceToLine(mousePos);
         multiplierText.text = "Multiplier: " + multiplier.ToString("0.0");
         hitPercentageText.text = "MissPercentage: " + hitPercentage.ToString("0.00");
-        if(Input.touchCount > 0)
+        if (Input.touchCount != 1)
         {
+            pauseGame();
+        }
+        if (playing)
+        {
+            
             distanceToLine = line.distanceToLine(Input.GetTouch(0).position);
             if (distanceToLine < line.lineThickness/2)
             {
@@ -61,7 +67,24 @@ public class LineHitDetection : MonoBehaviour {
                 
             }
             
+            
         }
-        
+        else {
+           if(Input.touchCount == 1)
+            {
+                resumeGame();
+            }
+        }
+      
+
+    }
+    public void pauseGame()
+    {
+        playing = false;
+    }
+
+    public void resumeGame()
+    {
+        playing = true;
     }
 }

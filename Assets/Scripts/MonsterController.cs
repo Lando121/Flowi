@@ -23,14 +23,21 @@ public class MonsterController : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        if (transform.position.x >= monsterStopx && monsterSpeed > 0) {
-            monsterSpeed = -monsterSpeed;
 
+        if (GameLoop.playing)
+        {
+            if (transform.position.x >= monsterStopx && monsterSpeed > 0)
+            {
+                monsterSpeed = -monsterSpeed;
+
+            }
+            else if (transform.position.x <= monsterStartx && monsterSpeed < 0)
+            {
+                monsterSpeed = -monsterSpeed;
+            }
+            transform.Translate(Vector2.right * monsterSpeed * Time.deltaTime, Space.World);
         }
-        else if (transform.position.x <= monsterStartx && monsterSpeed < 0) {
-            monsterSpeed = -monsterSpeed;
-        }
-        transform.Translate(Vector2.right * monsterSpeed * Time.deltaTime, Space.World);
+      
     }
 
 }

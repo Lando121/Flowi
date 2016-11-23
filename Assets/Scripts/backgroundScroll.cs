@@ -7,6 +7,7 @@ public class backgroundScroll : MonoBehaviour {
 	private LineGenerator lineGen;
 	private GameObject gObj;
 	public Camera mainCamera;
+    public float tmpTime = 0;
 
     private Renderer rend;
 
@@ -27,11 +28,18 @@ public class backgroundScroll : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-        //float scrollSpeed = lineGen.scrollSpeed;
-		Vector3 offset = new Vector3 (0, Time.time * 0.3f, 0);
-		rend.material.mainTextureOffset = offset;
-
-
+    
+        if(GameLoop.playing)
+        {
+            //float scrollSpeed = lineGen.scrollSpeed;
+            Vector3 offset = new Vector3(0, (Time.time - tmpTime) * 0.3f, 0);
+            rend.material.mainTextureOffset = offset;
+           
+        } else
+        {
+            tmpTime += Time.deltaTime;
+        }
+     
 	}
 
 }
