@@ -8,6 +8,11 @@ public class Line : MonoBehaviour {
     public Vector3[] points;
     public Vector3 endPoint;
 
+    public GameObject linePrefab;
+    public float outlineThickness = 0.02f;
+    private GameObject outline;
+    private LineRenderer outlineLine;
+
     public float scrollSpeed;
     public float screenBottom;
 
@@ -28,9 +33,14 @@ public class Line : MonoBehaviour {
     // Use this for initialization
     void Start() {
         line = GetComponent<LineRenderer>();
-        float redTint = Mathf.Clamp((lineDifficulty - 1) * 0.15f, 1, 0);
-        line.material.color = new Color(redTint, 1, 0);
+        float redTint = Mathf.Clamp((lineDifficulty - 1) * 0.15f, 0, 1);
+        line.material.color = new Color(1, 1-redTint, 1-redTint);
         line.numCornerVertices = 5;
+        outline = Instantiate(linePrefab);
+        outline.transform.parent = transform;
+        outline.transform.localPosition = Vector3.zero;
+        outlineLine = outline.GetComponent<LineRenderer>();
+        outlineLine.numCornerVertices = 5;
     }
 
     // Update is called once per frame
@@ -38,12 +48,17 @@ public class Line : MonoBehaviour {
         if (GameLoop.playing) {
             points = pruneOldPoints(points, transform.position);
             line.numPositions = points.Length;
+            outlineLine.numPositions = points.Length;
             line.SetPositions(points);
-            line.widthMultiplier = thickness;
+            line.widthMultiplier = lineWidth;
+            outlineLine.SetPositions(points);
+            outlineLine.SetPosition(points.Length - 1, points[points.Length - 1] + new Vector3(0, outlineThickness/2, 0));
+            outlineLine.SetPosition(0, points[0] - new Vector3(0, outlineThickness / 2, 0));
+            outlineLine.widthMultiplier = lineWidth + outlineThickness;
             float travelDist = scrollSpeed * Time.deltaTime;
             transform.Translate(0, -travelDist, 0);
+            //outline.transform.Translate(0, -travelDist, 0);
             distanceToFork -= travelDist;
-            line.widthMultiplier = lineWidth;
             shouldFork = (distanceToFork <= 0) ? true : false;
             if (endPoint.y + transform.position.y < screenBottom - pointRemovalOffset) {
                 die();

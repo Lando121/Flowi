@@ -23,14 +23,14 @@ public class LineTypes : MonoBehaviour {
     }
 
     public Vector3[] rightChoiceLine(Vector3 previousPoint) {
-        Vector3 rightPoint = previousPoint + new Vector3(screenWidth / 3, 3, 0);
-        Vector3[] points = new Vector3[] { previousPoint, rightPoint, rightPoint + new Vector3(0, screenHeight * 1.2f, 0) };
+        Vector3 rightPoint = previousPoint + new Vector3(screenWidth / 3, 0, 0);
+        Vector3[] points = new Vector3[] { previousPoint, rightPoint, rightPoint + new Vector3(0, screenHeight * 1.6f, 0) };
         return points;
     }
 
     public Vector3[] leftChoiceLine(Vector3 previousPoint) {
-        Vector3 leftPoint = previousPoint + new Vector3(-screenWidth / 3, 3, 0);
-        Vector3[] points = new Vector3[] { previousPoint, leftPoint, leftPoint + new Vector3(0, screenHeight * 1.2f, 0) };
+        Vector3 leftPoint = previousPoint + new Vector3(-screenWidth / 3, 0, 0);
+        Vector3[] points = new Vector3[] { previousPoint, leftPoint, leftPoint + new Vector3(0, screenHeight * 1.6f, 0) };
         return points;
     }
 

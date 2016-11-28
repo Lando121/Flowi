@@ -40,6 +40,6 @@ public class ShootMonster : MonoBehaviour {
 	}
 
     private void shoot() {
-        projectiles.Add(Instantiate(projectile, transform.position, Quaternion.identity));
+        projectiles.Add(Instantiate(projectile, transform.position + new Vector3(0,0,-2), Quaternion.identity));
     }
 }

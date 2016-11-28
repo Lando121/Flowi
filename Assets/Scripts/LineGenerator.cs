@@ -130,13 +130,15 @@ public class LineGenerator : MonoBehaviour {
         Vector3[] initLine = lineTypes.forkInitLine(from);
         Vector3 offset = mainLine.transform.position;
         offset.z = 0;
-        Vector3 forkPos = initLine[initLine.Length - 1] + offset;
+        Vector3 forkPos = initLine[initLine.Length - 1] + offset - new Vector3(0,(lineThickness-mainLine.outlineThickness)/2,0);
         Line leftLine = createLine(lineTypes.leftChoiceLine(forkPos), lineThickness, "ChoicePath");
+        //leftLine.transform.position = leftLine.transform.position + new Vector3(0, 0, 0.5f);
         Line rightLine = createLine(lineTypes.rightChoiceLine(forkPos), lineThickness, "ChoicePath");
+    //    rightLine.transform.position = rightLine.transform.position + new Vector3(0, 0, 0.5f);
         leftLine.lineDifficulty = mainLine.lineDifficulty + difficultyIncrement;
         rightLine.lineDifficulty = Mathf.Max(mainLine.lineDifficulty - difficultyIncrement, 1.0f);
         nextForkPos = forkPos - offset;
-
+        mainLine.transform.position = mainLine.transform.position + new Vector3(0, 0, 0.5f);
         return initLine;
     }
 
@@ -203,6 +205,7 @@ public class LineGenerator : MonoBehaviour {
 
     private void chooseLine(Line line) {
         mainLine = line;
+        line.distanceToFork *= line.lineDifficulty * (1 + difficultySpeedIncrease);
         foreach (Line l in lines) {
             if (l != line) {
                 Destroy(l.gameObject);
@@ -219,30 +222,34 @@ public class LineGenerator : MonoBehaviour {
     /// </summary>
     /// <returns>The generated line.</returns>
     private void generateFurther() {
-        float roll = Random.Range(0, 1000);
+        float typeRoll = Random.Range(0, 100);
+        float lineRoll = Random.Range(0, 1000);
         Vector3[] addedLine;
         Line line = mainLine;
         Vector3 from = line.endPoint;
-        roll *= mainLine.lineDifficulty / 3;
+        lineRoll *= mainLine.lineDifficulty / 5;
 
         if (mainLine.shouldFork) {
             addedLine = createFork(from);
             mainLine.shouldGenerate = false;
+        } else if (typeRoll >= 50) {
+             if (lineRoll < 600) {
+                addedLine = lineTypes.randomLine(10, from, 3, mainLine.lineDifficulty);
+            }
+            else if (lineRoll < 900) {
+                addedLine = lineTypes.zigZagLine(4, 40, 2, from, mainLine.lineDifficulty);
+            }
+            else {
+                addedLine = lineTypes.uLine(40, 10, from);
+            }
+        } else {
+            if (Random.Range(0,10) >= 5) {
+                addedLine = generateMonsterObstacle(from, screenWidth * 0.9f, 2 + Mathf.RoundToInt(mainLine.lineDifficulty / 3));
+            } else {
+                addedLine = shootingObstacle(from, mainLine.lineDifficulty);
+            }
         }
-        else if (roll < 600) {
-            addedLine = lineTypes.randomLine(10, from, 3, mainLine.lineDifficulty);
-        }
-        else if (roll < 900) {
-            addedLine = lineTypes.zigZagLine(4, 40, 2, from, mainLine.lineDifficulty);
-        }
-        else if (roll < 1300) {
-            addedLine = generateMonsterObstacle(from, screenWidth * 0.9f, 2 + Mathf.RoundToInt(mainLine.lineDifficulty / 3));
-        } else if (roll < 2000) {
-            addedLine = shootingObstacle(from, mainLine.lineDifficulty);
-        }
-        else {
-            addedLine = lineTypes.uLine(40, 10, from);
-        }
+
         line.drawLine(addedLine);
     }
 
@@ -250,15 +257,16 @@ public class LineGenerator : MonoBehaviour {
         int monsterAmount = 3 + Mathf.RoundToInt(difficulty);
         float yStep = screenHeight / 3;
         float obstacleDist = monsterAmount * yStep;
+        Vector3 startSpawn = from + mainLine.transform.position;
         for (int i = 0; i < monsterAmount; ++i) {
             GameObject newMonster = Instantiate(shootingMonster);
             newMonster.transform.parent = mainLine.transform;
             Vector3 monsterSpawnPos;
             ShootMonster monsterScript = newMonster.GetComponent<ShootMonster>();
             if (Random.Range(0,100) >= 50) {
-                monsterSpawnPos = new Vector3(screenLeft + xMargin, from.y + i * yStep, -1.5f);
+                monsterSpawnPos = new Vector3(screenLeft + xMargin, startSpawn.y + i * yStep, -1.5f);
             } else {
-                monsterSpawnPos = new Vector3(screenRight - xMargin, from.y + i * yStep, -1.5f);
+                monsterSpawnPos = new Vector3(screenRight - xMargin, startSpawn.y + i * yStep, -1.5f);
                 newMonster.GetComponent<SpriteRenderer>().flipX = true;
                 monsterScript.shootDir = -1;
             }
@@ -270,7 +278,7 @@ public class LineGenerator : MonoBehaviour {
 
     private Vector3[] generateMonsterObstacle(Vector3 from, float midWidth, int monsterCount) {
 
-        midWidth = Mathf.Clamp(midWidth, 0, screenWidth - 2 * xMargin);
+     //   midWidth = Mathf.Clamp(midWidth, 0, screenWidth - 2 * xMargin);
         Vector3 startPoint = new Vector3(screenLeft + screenWidth * 0.5f, from.y + (screenHeight * 0.2f), 0);
         Vector3[] startPos = new Vector3[] { from, startPoint, startPoint + new Vector3(0, 5, 0) };
 
@@ -288,9 +296,13 @@ public class LineGenerator : MonoBehaviour {
 
         Vector3[] endPoints = new Vector3[] { midPoints[midPoints.Length - 1], midPoints[midPoints.Length - 1] + new Vector3(0, screenHeight * 0.1f, 0) };
         Line endLine = createLine(endPoints, lineThickness);
-        mainLine = endLine;
+        setMainLine(endLine);
         return startPos;
     }
 
+    private void setMainLine(Line line) {
+        line.distanceToFork = mainLine.distanceToFork;
+        mainLine = line;
+    }
 
 }
