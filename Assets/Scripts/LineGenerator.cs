@@ -31,6 +31,7 @@ public class LineGenerator : MonoBehaviour {
     private Vector3 nextForkPos;
 
     public GameObject monster;
+    public GameObject shootingMonster;
     public GameObject LinePrefab;
     private LineTypes lineTypes;
 
@@ -126,7 +127,6 @@ public class LineGenerator : MonoBehaviour {
     }
 
     private Vector3[] createFork(Vector3 from) {
-        //   accelerateTo(0.02f);
         Vector3[] initLine = lineTypes.forkInitLine(from);
         Vector3 offset = mainLine.transform.position;
         offset.z = 0;
@@ -136,6 +136,7 @@ public class LineGenerator : MonoBehaviour {
         leftLine.lineDifficulty = mainLine.lineDifficulty + difficultyIncrement;
         rightLine.lineDifficulty = Mathf.Max(mainLine.lineDifficulty - difficultyIncrement, 1.0f);
         nextForkPos = forkPos - offset;
+
         return initLine;
     }
 
@@ -163,7 +164,7 @@ public class LineGenerator : MonoBehaviour {
             Vector3 offset = line.transform.position;
             for (int i = 0; i < points.Length - 1; ++i) {
                 Vector3 dir = points[i + 1] - points[i];
-                float distToPoint = DistancePointLine(position, points[i] + offset, points[i + 1] + offset);
+                float distToPoint = distancePointLine(position, points[i] + offset, points[i + 1] + offset);
                 //float distToPoint = Mathf.Abs((position - (points[i] + offset)).magnitude);
                 if (distToPoint < minDist) {
                     minDist = distToPoint;
@@ -178,19 +179,19 @@ public class LineGenerator : MonoBehaviour {
         return minDist;
     }
 
-    public float DistancePointLine(Vector3 point, Vector3 lineStart, Vector3 lineEnd) {
-        return Vector3.Magnitude(ProjectPointLine(point, lineStart, lineEnd) - point);
+    public float distancePointLine(Vector3 point, Vector3 lineStart, Vector3 lineEnd) {
+        return Vector3.Magnitude(projectPointLine(point, lineStart, lineEnd) - point);
     }
-    public Vector3 ProjectPointLine(Vector3 point, Vector3 lineStart, Vector3 lineEnd) {
+    public Vector3 projectPointLine(Vector3 point, Vector3 lineStart, Vector3 lineEnd) {
         Vector3 rhs = point - lineStart;
         Vector3 vector2 = lineEnd - lineStart;
         float magnitude = vector2.magnitude;
         Vector3 lhs = vector2;
         if (magnitude > 1E-06f) {
-            lhs = (Vector3)(lhs / magnitude);
+            lhs = (lhs / magnitude);
         }
         float num2 = Mathf.Clamp(Vector3.Dot(lhs, rhs), 0f, magnitude);
-        return (lineStart + ((Vector3)(lhs * num2)));
+        return (lineStart + (lhs * num2));
     }
 
     private void checkChoiceLine(Line line) {
@@ -229,19 +230,42 @@ public class LineGenerator : MonoBehaviour {
             mainLine.shouldGenerate = false;
         }
         else if (roll < 600) {
-            addedLine = lineTypes.randomLine(10, from, 3);
+            addedLine = lineTypes.randomLine(10, from, 3, mainLine.lineDifficulty);
         }
         else if (roll < 900) {
-            addedLine = lineTypes.zigZagLine(4, 40, 2 + Mathf.RoundToInt(mainLine.lineDifficulty), from);
+            addedLine = lineTypes.zigZagLine(4, 40, 2, from, mainLine.lineDifficulty);
         }
         else if (roll < 1300) {
             addedLine = generateMonsterObstacle(from, screenWidth * 0.9f, 2 + Mathf.RoundToInt(mainLine.lineDifficulty / 3));
+        } else if (roll < 2000) {
+            addedLine = shootingObstacle(from, mainLine.lineDifficulty);
         }
         else {
             addedLine = lineTypes.uLine(40, 10, from);
-            // return generateMonsterObstacle(from, Mathf.Abs(screenRightPos - screenLeftPos) - 2 * xMargin, 2, line);
         }
         line.drawLine(addedLine);
+    }
+
+    private Vector3[] shootingObstacle(Vector3 from, float difficulty) {
+        int monsterAmount = 3 + Mathf.RoundToInt(difficulty);
+        float yStep = screenHeight / 3;
+        float obstacleDist = monsterAmount * yStep;
+        for (int i = 0; i < monsterAmount; ++i) {
+            GameObject newMonster = Instantiate(shootingMonster);
+            newMonster.transform.parent = mainLine.transform;
+            Vector3 monsterSpawnPos;
+            ShootMonster monsterScript = newMonster.GetComponent<ShootMonster>();
+            if (Random.Range(0,100) >= 50) {
+                monsterSpawnPos = new Vector3(screenLeft + xMargin, from.y + i * yStep, -1.5f);
+            } else {
+                monsterSpawnPos = new Vector3(screenRight - xMargin, from.y + i * yStep, -1.5f);
+                newMonster.GetComponent<SpriteRenderer>().flipX = true;
+                monsterScript.shootDir = -1;
+            }
+            newMonster.transform.position = monsterSpawnPos;
+            monsterScript.setAttachedLine(mainLine);
+        }
+        return new Vector3[] { from, new Vector3(0, from.y + obstacleDist, 0), new Vector3(0, from.y + 1.5f * obstacleDist, 0) };
     }
 
     private Vector3[] generateMonsterObstacle(Vector3 from, float midWidth, int monsterCount) {

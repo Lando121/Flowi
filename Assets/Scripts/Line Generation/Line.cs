@@ -15,6 +15,7 @@ public class Line : MonoBehaviour {
     public float distanceToFork = 300;
     public float initWidth = 2.0f;
     public float lineWidth = 2.0f;
+    public float minLineWidth = 0.2f;
 
     public float pointRemovalOffset = 10.0f;
     public float generationOffset = 10.0f;
@@ -27,6 +28,8 @@ public class Line : MonoBehaviour {
     // Use this for initialization
     void Start() {
         line = GetComponent<LineRenderer>();
+        float redTint = Mathf.Clamp((lineDifficulty - 1) * 0.15f, 1, 0);
+        line.material.color = new Color(redTint, 1, 0);
         line.numCornerVertices = 5;
     }
 
@@ -69,7 +72,7 @@ public class Line : MonoBehaviour {
     }
 
     public void setThickness(float amount) {
-        thickness = amount;
+        thickness = Mathf.Max(minLineWidth, amount);
     }
 
     private Vector3[] pruneOldPoints(Vector3[] points, Vector3 offset) {

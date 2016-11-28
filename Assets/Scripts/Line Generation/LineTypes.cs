@@ -17,7 +17,7 @@ public class LineTypes : MonoBehaviour {
     }
 
     public Vector3[] forkInitLine(Vector3 previousPoint) {
-        Vector3 midPoint = previousPoint + new Vector3(-previousPoint.x, screenHeight/2, 0);
+        Vector3 midPoint = previousPoint + new Vector3(-previousPoint.x, screenHeight, 0);
         Vector3[] points = new Vector3[] { previousPoint, midPoint, midPoint + new Vector3(0, screenHeight/2, 0) };
         return points;
     }
@@ -60,13 +60,15 @@ public class LineTypes : MonoBehaviour {
         return line;
     }
 
-    public Vector3[] zigZagLine(float height, float zagWidth, int zags, Vector3 previousPoint) {
+    public Vector3[] zigZagLine(float height, float zagWidth, int zags, Vector3 previousPoint, float difficulty) {
         Vector3[] points = new Vector3[zags * 2 + 2];
         points[0] = previousPoint;
         points[1] = previousPoint + new Vector3(0, height, 0);
         int dir = (previousPoint.x > 0) ? -1 : 1;
         zagWidth = Mathf.Min(zagWidth, Mathf.Abs(screenRight - screenLeft - 2 * xMargin) / 2);
+        height = Mathf.Clamp(height, screenHeight / 8, height / (difficulty / 3));
         points[1].x = previousPoint.x + dir * zagWidth;
+        zags += Mathf.RoundToInt(difficulty);
 
         //points[1].x = Mathf.Clamp(points[1].x, screenLeftPos + xMargin, screenRightPos - xMargin);
         points[2] = points[1] + new Vector3(0, height / 2, 0);
@@ -86,7 +88,7 @@ public class LineTypes : MonoBehaviour {
     /// <param name="points">Amount of points the line should contain.</param>
     /// <param name="previousPoint">Point that the line starts from.</param>
     /// <returns>The generated line.</returns>
-    public Vector3[] randomLine(int points, Vector3 previousPoint, float yStep) {
+    public Vector3[] randomLine(int points, Vector3 previousPoint, float yStep, float difficulty) {
         if (points <= 1)
             return null;
         Vector3 transition = new Vector3(0, 3, 0);
@@ -95,7 +97,7 @@ public class LineTypes : MonoBehaviour {
         newLine[1] = previousPoint + transition;
 
         for (int i = 2; i < points - 1; ++i) {
-            newLine[i] = generateNewPoint(newLine[i - 1], yStep);
+            newLine[i] = generateNewPoint(newLine[i - 1], yStep, difficulty);
         }
         newLine[points - 1] = newLine[points - 2] + transition;
         return newLine;
@@ -106,9 +108,9 @@ public class LineTypes : MonoBehaviour {
     /// </summary>
     /// <param name="previousPoint">Previous point to step from.</param>
     /// <returns>The new point.</returns>
-    public Vector3 generateNewPoint(Vector3 previousPoint, float yStep) {
-        float yIncrease = yStep;
-        Vector3 newPoint = previousPoint + new Vector3(Random.Range(-2.0f, 2.0f), yIncrease, 0);
+    public Vector3 generateNewPoint(Vector3 previousPoint, float yStep, float difficulty) {
+        float xStep = 2 + difficulty * 0.3f;
+        Vector3 newPoint = previousPoint + new Vector3(Random.Range(-xStep, xStep), yStep, 0);
         newPoint.x = Mathf.Clamp(newPoint.x, screenLeft + xMargin, screenRight - xMargin);
         //float xPos = Random.Range(xMargin - screenRightPos, screenRightPos- xMargin);
         //float xPos = Mathf.Clamp(3.0f*Mathf.Sin(previousPoint.y), xMargin - screenWidth, screenWidth - xMargin);
