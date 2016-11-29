@@ -22,6 +22,8 @@ public class GameLoop : MonoBehaviour {
     private int resumeCounter = 3;
     private float tmpCounterTime = 0;
     private int hpDecreaseMultiplier = 5;
+	private TutScript notificationScript;
+	private bool gameHasStarted = false;
 
     private float distanceToLine;
     // Use this for initialization
@@ -30,10 +32,13 @@ public class GameLoop : MonoBehaviour {
         multiplierText.text = "Multiplier: ";
         hitPercentageText.text = "";
         line = lineObject.GetComponent<LineGenerator>();
+		notificationScript = GameObject.Find ("NotificationText").GetComponent<TutScript> ();
+		notificationScript.displayText ("Place your finger on the circle!", 60);
     }
 	
 	// Update is called once per frame
 	void Update () {
+
       
         if (Input.touchCount == 0)
         {
@@ -49,8 +54,9 @@ public class GameLoop : MonoBehaviour {
             lastKnownTouch = Input.GetTouch(0);
         }
         else {
-           if(Input.touchCount == 1 && !resumingGame)
+			if(Input.touchCount == 1 && !resumingGame)
             {
+				notificationScript.disable (); //Disable   tutorial text
                 resumingGame = true;
                 tmpCounterTime = Time.realtimeSinceStartup;
                 countDownText.enabled = true;
