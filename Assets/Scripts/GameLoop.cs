@@ -28,7 +28,7 @@ public class GameLoop : MonoBehaviour {
     private float distanceToLine;
     // Use this for initialization
     void Start () {
-
+        Physics2D.gravity = Vector2.zero;
         multiplierText.text = "Multiplier: ";
         hitPercentageText.text = "";
         line = lineObject.GetComponent<LineGenerator>();
@@ -71,6 +71,11 @@ public class GameLoop : MonoBehaviour {
         }
       
 
+    }
+
+    public void increaseHitPercentage(float value)
+    {
+        hitPercentage += value;
     }
 
     private void hittingLine()
