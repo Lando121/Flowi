@@ -21,6 +21,7 @@ public class GameLoop : MonoBehaviour {
     private Touch lastKnownTouch;
     private int resumeCounter = 3;
     private float tmpCounterTime = 0;
+    private int hpDecreaseMultiplier = 5;
 
     private float distanceToLine;
     // Use this for initialization
@@ -44,6 +45,7 @@ public class GameLoop : MonoBehaviour {
         if (playing)
         {
             hittingLine();
+            GameObject.Find("HP_bar").GetComponent<PositionOfHpBar>().updateHPLine(hitPercentage);
             lastKnownTouch = Input.GetTouch(0);
         }
         else {
@@ -84,7 +86,7 @@ public class GameLoop : MonoBehaviour {
         }
         else
         {
-            hitPercentage += Time.deltaTime;
+            hitPercentage += Time.deltaTime*hpDecreaseMultiplier;
             timeOutsideLine += Time.deltaTime;
             if (timeOutsideLine > 0.2)
             {
