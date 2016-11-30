@@ -39,7 +39,11 @@ public class GameLoop : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
-      
+        if (hitPercentage > 100)
+        {
+            GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
+        }
+
         if (Input.touchCount == 0)
         {
             resumingGame = false;
