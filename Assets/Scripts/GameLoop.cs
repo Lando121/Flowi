@@ -14,7 +14,7 @@ public class GameLoop : MonoBehaviour {
     public float multiplierTime = 0;
     private float tmpLineTime = 0;
     public Text multiplierText;
-    public Text hitPercentageText;
+  
     public Text countDownText;
     private float hitPercentage = 0;
     private float timeOutsideLine = 0;
@@ -30,7 +30,7 @@ public class GameLoop : MonoBehaviour {
     void Start () {
         Physics2D.gravity = Vector2.zero;
         multiplierText.text = "Multiplier: ";
-        hitPercentageText.text = "";
+      
         line = lineObject.GetComponent<LineGenerator>();
 		notificationScript = GameObject.Find ("NotificationText").GetComponent<TutScript> ();
 		notificationScript.displayText ("Place your finger on the circle!", 60);
@@ -86,7 +86,7 @@ public class GameLoop : MonoBehaviour {
     {
         //multiplierText.text = Input.GetTouch(0).position.ToString();
         multiplierText.text = "Multiplier: " + multiplier.ToString("0.0");
-        hitPercentageText.text = "MissPercentage: " + hitPercentage.ToString("0.00");
+      
 
         distanceToLine = line.distanceToLine(Input.GetTouch(0).position);
         if (distanceToLine < line.lineThickness / 2)
