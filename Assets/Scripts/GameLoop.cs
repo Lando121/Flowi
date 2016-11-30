@@ -14,6 +14,7 @@ public class GameLoop : MonoBehaviour {
     public float multiplierTime = 0;
     private float tmpLineTime = 0;
     public Text multiplierText;
+    public Text scoreText;
     public float score;
     public Text countDownText;
     private float hitPercentage = 0;
@@ -40,12 +41,14 @@ public class GameLoop : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 
+        scoreText.text = "Score: " + score.ToString("0.0");
         if (hitPercentage > 100)
         {
             //GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
             //GameObject.Find("NotifcationText").GetComponent<RectTransform>().sizeDelta = new Vector2(Screen.width * 0.8f, Screen.width * 0.8f);
             notificationScript.enable();
             notificationScript.displayText("You Lost you worthless piece of shit, but you score is " + score.ToString("0.0"), 50);
+            GameObject.Find("HP_bar").GetComponent<PositionOfHpBar>().updateHPLine(hitPercentage);
             gameOver = true;
             playing = false;
             
