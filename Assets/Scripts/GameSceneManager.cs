@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GameSceneManager : MonoBehaviour {
- 
+
+    
    public void changeToScene(string scene)
     {
         SceneManager.LoadScene(scene);
