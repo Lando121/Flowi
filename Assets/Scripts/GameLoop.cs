@@ -71,16 +71,25 @@ public class GameLoop : MonoBehaviour {
         else if(!gameOver){
 			if(Input.touchCount == 1 && !resumingGame)
             {
-				notificationScript.disable (); //Disable   tutorial text
-                resumingGame = true;
-                tmpCounterTime = Time.realtimeSinceStartup;
-                countDownText.enabled = true;
-                resumeGame();
+                if((Input.GetTouch(0).position - lastKnownTouch.position).magnitude < 200)
+                {
+                    notificationScript.disable(); //Disable   tutorial text
+                    resumingGame = true;
+                    tmpCounterTime = Time.realtimeSinceStartup;
+                    countDownText.enabled = true;
+                    resumeGame();
+                }
+				
             } else
             {
                 if(Input.touchCount == 1)
                 {
-                    resumeGame();
+                    if ((Input.GetTouch(0).position - lastKnownTouch.position).magnitude > 200)
+                    {
+                        resumingGame = false;
+                        countDownText.enabled = false;
+                    }
+                        resumeGame();
                 }
             }
         }
@@ -137,6 +146,11 @@ public class GameLoop : MonoBehaviour {
     public void pauseGame() {
         playing = false;
 
+    }
+
+    public void setStartingPoint(Vector2 pos)
+    {
+        lastKnownTouch.position = pos;
     }
 
     public void resumeGame()
