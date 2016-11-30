@@ -41,20 +41,25 @@ public class Line : MonoBehaviour {
         outline.transform.localPosition = Vector3.zero;
         outlineLine = outline.GetComponent<LineRenderer>();
         outlineLine.numCornerVertices = 5;
+        updatePoints();
+    }
+
+    private void updatePoints() {
+        points = pruneOldPoints(points, transform.position);
+        line.numPositions = points.Length;
+        outlineLine.numPositions = points.Length;
+        line.SetPositions(points);
+        line.widthMultiplier = lineWidth;
+        outlineLine.SetPositions(points);
+        outlineLine.SetPosition(points.Length - 1, points[points.Length - 1] + new Vector3(0, outlineThickness / 2, 0));
+        outlineLine.SetPosition(0, points[0] - new Vector3(0, outlineThickness / 2, 0));
+        outlineLine.widthMultiplier = lineWidth + outlineThickness;
     }
 
     // Update is called once per frame
     void Update() {
         if (GameLoop.playing) {
-            points = pruneOldPoints(points, transform.position);
-            line.numPositions = points.Length;
-            outlineLine.numPositions = points.Length;
-            line.SetPositions(points);
-            line.widthMultiplier = lineWidth;
-            outlineLine.SetPositions(points);
-            outlineLine.SetPosition(points.Length - 1, points[points.Length - 1] + new Vector3(0, outlineThickness/2, 0));
-            outlineLine.SetPosition(0, points[0] - new Vector3(0, outlineThickness / 2, 0));
-            outlineLine.widthMultiplier = lineWidth + outlineThickness;
+            updatePoints();
             float travelDist = scrollSpeed * Time.deltaTime;
             transform.Translate(0, -travelDist, 0);
             //outline.transform.Translate(0, -travelDist, 0);

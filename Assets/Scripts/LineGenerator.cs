@@ -42,6 +42,8 @@ public class LineGenerator : MonoBehaviour
     private coinScript coinGenerator;
     public GameObject coinGen;
 
+    public GameObject startCircle;
+
     // Use this for initialization
     void Start()
     {
@@ -60,7 +62,11 @@ public class LineGenerator : MonoBehaviour
         screenWidth = Mathf.Abs(screenRight - screenLeft);
         screenHeight = Mathf.Abs(screenTop - screenBottom);
 
-        createLine(lineTypes.straightLine(new Vector3(0, screenBottom, 0), new Vector3(0, screenBottom + screenHeight * 2, 0)), lineThickness);
+        Vector3 startPos = new Vector3(0, screenBottom + screenHeight / 4, 0);
+        createLine(lineTypes.straightLine(startPos, new Vector3(0, screenBottom + screenHeight * 2, 0)), lineThickness);
+        GameObject circle = Instantiate(startCircle, mainLine.transform);
+        circle.transform.localPosition = new Vector3(0, startPos.y, -2);
+
 
         coinGenerator = coinGen.GetComponent<coinScript>();
     }
@@ -178,29 +184,31 @@ public class LineGenerator : MonoBehaviour
     /// <returns>Distance to the line.</returns>
     public float distanceToLine(Vector3 position)
     {
-        position.z = -1;
+        position.z = 0;
         float minDist = float.MaxValue;
         float distToOriginLine = float.MaxValue;
         Line closestLine = mainLine;
-        foreach (Line line in lines)
-        {
+        foreach (Line line in lines) {
             Vector3[] points = line.points;
             Vector3 offset = line.transform.position;
-            for (int i = 0; i < points.Length - 1; ++i)
-            {
+            offset.z = -offset.z;
+            for (int i = 0; i < points.Length - 1; ++i) {
                 Vector3 dir = points[i + 1] - points[i];
-                float distToPoint = distancePointLine(position, points[i] + offset, points[i + 1] + offset);
+                Vector3 lineStart = points[i] + offset;
+                lineStart.z -= lineStart.z;
+                Vector3 lineEnd = points[i + 1] + offset;
+                lineEnd.z -= lineEnd.z;
+                float distToPoint = distancePointLine(position, lineStart, lineEnd) - line.lineWidth / 2;
                 //float distToPoint = Mathf.Abs((position - (points[i] + offset)).magnitude);
-                if (distToPoint < minDist)
-                {
+                if (distToPoint < minDist) {
                     minDist = distToPoint;
                     closestLine = line;
                 }
                 distToOriginLine = (line == mainLine) ? Mathf.Min(distToPoint, distToOriginLine) : distToOriginLine;
             }
         }
-        if (minDist <= 2.0f && distToOriginLine > choiceSnapDistance)
-        {
+        print(minDist);
+        if (minDist <= 0 && distToOriginLine > choiceSnapDistance) {
             checkChoiceLine(closestLine);
         }
         return minDist;

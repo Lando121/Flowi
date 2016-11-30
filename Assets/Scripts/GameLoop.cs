@@ -24,6 +24,7 @@ public class GameLoop : MonoBehaviour {
     private float tmpCounterTime = 0;
     private int hpDecreaseMultiplier = 5;
 	private TutScript notificationScript;
+    private DeadMenuScript deadMenuScript;
 	private bool gameHasStarted = false;
     private bool gameOver = false;
 
@@ -32,10 +33,11 @@ public class GameLoop : MonoBehaviour {
     void Start () {
         Physics2D.gravity = Vector2.zero;
         multiplierText.text = "Multiplier: ";
-      
+        GameObject.Find("DeadMenu").SetActive(false);
         line = lineObject.GetComponent<LineGenerator>();
 		notificationScript = GameObject.Find ("NotificationText").GetComponent<TutScript> ();
 		notificationScript.displayText ("Place your finger on the circle!", 60);
+        lastKnownTouch.position = new Vector2(Screen.width / 2, Screen.height / 4);
     }
 	
 	// Update is called once per frame
@@ -44,14 +46,17 @@ public class GameLoop : MonoBehaviour {
         scoreText.text = "Score: " + score.ToString("0.0");
         if (hitPercentage > 100)
         {
-            //GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
+           // GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
             //GameObject.Find("NotifcationText").GetComponent<RectTransform>().sizeDelta = new Vector2(Screen.width * 0.8f, Screen.width * 0.8f);
-            notificationScript.enable();
-            notificationScript.displayText("You Lost you worthless piece of shit, but you score is " + score.ToString("0.0"), 50);
+           
+            // notificationScript.enable();
+            // notificationScript.displayText("You Lost you worthless piece of shit, but you score is " + score.ToString("0.0"), 50);
             GameObject.Find("HP_bar").GetComponent<PositionOfHpBar>().updateHPLine(hitPercentage);
             gameOver = true;
             playing = false;
-            
+            GameObject.Find("DeadMenu").SetActive(true);
+            GameObject.Find("DeadMenu").GetComponent<DeadMenuScript>().init();
+
         }
 
         if (Input.touchCount == 0)
@@ -63,12 +68,15 @@ public class GameLoop : MonoBehaviour {
         }      
         if (playing)
         {
+            
             score += Time.deltaTime;
             hittingLine();
             GameObject.Find("HP_bar").GetComponent<PositionOfHpBar>().updateHPLine(hitPercentage);
             lastKnownTouch = Input.GetTouch(0);
         }
         else if(!gameOver){
+           
+
 			if(Input.touchCount == 1 && !resumingGame)
             {
                 if((Input.GetTouch(0).position - lastKnownTouch.position).magnitude < 200)
@@ -114,7 +122,7 @@ public class GameLoop : MonoBehaviour {
       
 
         distanceToLine = line.distanceToLine(Input.GetTouch(0).position);
-        if (distanceToLine < line.lineThickness / 2)
+        if (distanceToLine <= 0)
         {
             multiplierTime += Time.deltaTime;
             timeOutsideLine = 0;
