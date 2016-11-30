@@ -22,4 +22,9 @@ public class TutScript : MonoBehaviour {
 	public void disable(){
 		notifactionText.enabled = false;
 	}
+
+    public void enable()
+    {
+        notifactionText.enabled = true;
+    }
 }

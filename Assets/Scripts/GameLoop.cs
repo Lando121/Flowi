@@ -14,7 +14,7 @@ public class GameLoop : MonoBehaviour {
     public float multiplierTime = 0;
     private float tmpLineTime = 0;
     public Text multiplierText;
-  
+    public float score;
     public Text countDownText;
     private float hitPercentage = 0;
     private float timeOutsideLine = 0;
@@ -41,7 +41,9 @@ public class GameLoop : MonoBehaviour {
 
         if (hitPercentage > 100)
         {
-            GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
+            //GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
+            notificationScript.enable();
+            notificationScript.displayText("You Lost you worthless piece of shit", 50);
         }
 
         if (Input.touchCount == 0)
