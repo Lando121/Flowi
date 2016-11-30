@@ -90,6 +90,11 @@ public class GameLoop : MonoBehaviour {
         hitPercentage += value;
     }
 
+    public void addScore(float value)
+    {
+        score += value * multiplier;
+    }
+
     private void hittingLine()
     {
         //multiplierText.text = Input.GetTouch(0).position.ToString();
