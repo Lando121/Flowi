@@ -104,7 +104,7 @@ public class GameLoop : MonoBehaviour {
 
     public void addScore(float value)
     {
-        score += value * multiplier;
+        score += value * 1 + multiplier;
     }
 
     private void hittingLine()
