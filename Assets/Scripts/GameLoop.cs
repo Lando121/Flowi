@@ -24,6 +24,7 @@ public class GameLoop : MonoBehaviour {
     private int hpDecreaseMultiplier = 5;
 	private TutScript notificationScript;
 	private bool gameHasStarted = false;
+    private bool gameOver = false;
 
     private float distanceToLine;
     // Use this for initialization
@@ -42,8 +43,12 @@ public class GameLoop : MonoBehaviour {
         if (hitPercentage > 100)
         {
             //GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
+            //GameObject.Find("NotifcationText").GetComponent<RectTransform>().sizeDelta = new Vector2(Screen.width * 0.8f, Screen.width * 0.8f);
             notificationScript.enable();
-            notificationScript.displayText("You Lost you worthless piece of shit", 50);
+            notificationScript.displayText("You Lost you worthless piece of shit, but you score is " + score.ToString("0.0"), 50);
+            gameOver = true;
+            playing = false;
+            
         }
 
         if (Input.touchCount == 0)
@@ -55,11 +60,12 @@ public class GameLoop : MonoBehaviour {
         }      
         if (playing)
         {
+            score += Time.deltaTime;
             hittingLine();
             GameObject.Find("HP_bar").GetComponent<PositionOfHpBar>().updateHPLine(hitPercentage);
             lastKnownTouch = Input.GetTouch(0);
         }
-        else {
+        else if(!gameOver){
 			if(Input.touchCount == 1 && !resumingGame)
             {
 				notificationScript.disable (); //Disable   tutorial text
