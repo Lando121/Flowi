@@ -23,32 +23,31 @@ public class GameLoop : MonoBehaviour {
     private int resumeCounter = 3;
     private float tmpCounterTime = 0;
     private int hpDecreaseMultiplier = 5;
-	private TutScript notificationScript;
+    private TutScript notificationScript;
     private DeadMenuScript deadMenuScript;
-	private bool gameHasStarted = false;
+    private bool gameHasStarted = false;
     private bool gameOver = false;
 
     private float distanceToLine;
     // Use this for initialization
-    void Start () {
+    void Start() {
         Physics2D.gravity = Vector2.zero;
         multiplierText.text = "Multiplier: ";
         GameObject.Find("DeadMenu").SetActive(false);
         line = lineObject.GetComponent<LineGenerator>();
-		notificationScript = GameObject.Find ("NotificationText").GetComponent<TutScript> ();
-		notificationScript.displayText ("Place your finger on the circle!", 60);
+        notificationScript = GameObject.Find("NotificationText").GetComponent<TutScript>();
+        notificationScript.displayText("Place your finger on the circle!", 60);
         lastKnownTouch.position = new Vector2(Screen.width / 2, Screen.height / 4);
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update() {
 
         scoreText.text = "Score: " + score.ToString("0.0");
-        if (hitPercentage > 100)
-        {
-           // GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
+        if (hitPercentage > 100) {
+            // GameObject.Find("GameManager").GetComponent<GameSceneManager>().changeToScene("main_menu");
             //GameObject.Find("NotifcationText").GetComponent<RectTransform>().sizeDelta = new Vector2(Screen.width * 0.8f, Screen.width * 0.8f);
-           
+
             // notificationScript.enable();
             // notificationScript.displayText("You Lost you worthless piece of shit, but you score is " + score.ToString("0.0"), 50);
             GameObject.Find("HP_bar").GetComponent<PositionOfHpBar>().updateHPLine(hitPercentage);
@@ -59,88 +58,74 @@ public class GameLoop : MonoBehaviour {
 
         }
 
-        if (Input.touchCount == 0)
-        {
+        if (Input.touchCount == 0) {
             resumingGame = false;
             countDownText.enabled = false;
             pauseGame();
-           
-        }      
-        if (playing)
-        {
-            
+
+        }
+        if (playing) {
+
             score += Time.deltaTime;
             hittingLine();
             GameObject.Find("HP_bar").GetComponent<PositionOfHpBar>().updateHPLine(hitPercentage);
             lastKnownTouch = Input.GetTouch(0);
         }
-        else if(!gameOver){
-           
+        else if (!gameOver) {
 
-			if(Input.touchCount == 1 && !resumingGame)
-            {
-                if((Input.GetTouch(0).position - lastKnownTouch.position).magnitude < 200)
-                {
+
+            if (Input.touchCount == 1 && !resumingGame) {
+                if ((Input.GetTouch(0).position - lastKnownTouch.position).magnitude < 200) {
                     notificationScript.disable(); //Disable   tutorial text
                     resumingGame = true;
                     tmpCounterTime = Time.realtimeSinceStartup;
                     countDownText.enabled = true;
                     resumeGame();
                 }
-				
-            } else
-            {
-                if(Input.touchCount == 1)
-                {
-                    if ((Input.GetTouch(0).position - lastKnownTouch.position).magnitude > 200)
-                    {
+
+            }
+            else {
+                if (Input.touchCount == 1) {
+                    if ((Input.GetTouch(0).position - lastKnownTouch.position).magnitude > 200) {
                         resumingGame = false;
                         countDownText.enabled = false;
                     }
-                        resumeGame();
+                    resumeGame();
                 }
             }
         }
-      
+
 
     }
 
-    public void increaseHitPercentage(float value)
-    {
+    public void increaseHitPercentage(float value) {
         hitPercentage += value;
     }
 
-    public void addScore(float value)
-    {
+    public void addScore(float value) {
         score += value * 1 + multiplier;
     }
 
-    private void hittingLine()
-    {
+    private void hittingLine() {
         //multiplierText.text = Input.GetTouch(0).position.ToString();
         multiplierText.text = "Multiplier: " + multiplier.ToString("0.0");
-      
+
 
         distanceToLine = line.distanceToLine(Input.GetTouch(0).position);
-        if (distanceToLine <= 0)
-        {
+        if (distanceToLine <= 0) {
             multiplierTime += Time.deltaTime;
             timeOutsideLine = 0;
-            if ((int)Mathf.Floor(multiplierTime) != tmpLineTime)
-            {
+            if ((int)Mathf.Floor(multiplierTime) != tmpLineTime) {
                 tmpLineTime++;
                 multiplier += 0.5f;
             }
         }
-        else
-        {
-            hitPercentage += Time.deltaTime*hpDecreaseMultiplier;
+        else {
+            hitPercentage += Time.deltaTime * hpDecreaseMultiplier;
             timeOutsideLine += Time.deltaTime;
-            if (timeOutsideLine > 0.2)
-            {
+            if (timeOutsideLine > 0.2) {
                 multiplier -= 0.2f;
-                if (multiplier < 0)
-                {
+                if (multiplier < 0) {
                     multiplier = 0;
                 }
                 timeOutsideLine = 0;
@@ -150,21 +135,18 @@ public class GameLoop : MonoBehaviour {
             multiplierTime = 0;
         }
     }
-   
+
     public void pauseGame() {
         playing = false;
 
     }
 
-    public void setStartingPoint(Vector2 pos)
-    {
+    public void setStartingPoint(Vector2 pos) {
         lastKnownTouch.position = pos;
     }
 
-    public void resumeGame()
-    {
-        if (Time.realtimeSinceStartup - tmpCounterTime > resumeCounter)
-        {
+    public void resumeGame() {
+        if (Time.realtimeSinceStartup - tmpCounterTime > resumeCounter) {
             resumingGame = false;
             playing = true;
             countDownText.enabled = false;

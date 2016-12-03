@@ -24,7 +24,6 @@ public class Line : MonoBehaviour {
 
     public float pointRemovalOffset = 10.0f;
     public float generationOffset = 10.0f;
-    private float thickness = 1.0f;
     public bool shouldGenerate = true;
     public bool shouldFork = false;
 
@@ -33,12 +32,14 @@ public class Line : MonoBehaviour {
     // Use this for initialization
     void Start() {
         line = GetComponent<LineRenderer>();
-        float redTint = Mathf.Clamp((lineDifficulty - 1) * 0.15f, 0, 1);
-        line.material.color = new Color(1, 1-redTint, 1-redTint);
+        float redAmount = (lineDifficulty - 1) * 0.15f;
+        float redTint = Mathf.Clamp(redAmount, 0, 1);
+        float redDarkening = Mathf.Clamp(redAmount - 1, 0, 1);
+        line.material.color = new Color(1-redDarkening, 1-redTint, 1-redTint);
         line.numCornerVertices = 5;
         outline = Instantiate(linePrefab);
         outline.transform.parent = transform;
-        outline.transform.localPosition = Vector3.zero;
+        outline.transform.localPosition = new Vector3(0,0,0.3f);
         outlineLine = outline.GetComponent<LineRenderer>();
         outlineLine.numCornerVertices = 5;
         updatePoints();
@@ -49,11 +50,11 @@ public class Line : MonoBehaviour {
         line.numPositions = points.Length;
         outlineLine.numPositions = points.Length;
         line.SetPositions(points);
-        line.widthMultiplier = lineWidth;
+        line.widthMultiplier = lineWidth - outlineThickness;
         outlineLine.SetPositions(points);
         outlineLine.SetPosition(points.Length - 1, points[points.Length - 1] + new Vector3(0, outlineThickness / 2, 0));
         outlineLine.SetPosition(0, points[0] - new Vector3(0, outlineThickness / 2, 0));
-        outlineLine.widthMultiplier = lineWidth + outlineThickness;
+        outlineLine.widthMultiplier = lineWidth;
     }
 
     // Update is called once per frame
@@ -92,7 +93,7 @@ public class Line : MonoBehaviour {
     }
 
     public void setThickness(float amount) {
-        thickness = Mathf.Max(minLineWidth, amount);
+        lineWidth = Mathf.Max(minLineWidth+outlineThickness, amount);
     }
 
     private Vector3[] pruneOldPoints(Vector3[] points, Vector3 offset) {
