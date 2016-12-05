@@ -2,12 +2,12 @@
 using System.Collections;
 
 public class backgroundScroll : MonoBehaviour {
-	public float scrollSpeed;
 	public float backgroundSize;
 	private LineGenerator lineGen;
 	private GameObject gObj;
 	public Camera mainCamera;
     public float tmpTime = 0;
+	private float speed = 0.15f;
 
     private Renderer rend;
 
@@ -32,7 +32,7 @@ public class backgroundScroll : MonoBehaviour {
         if(GameLoop.playing)
         {
             //float scrollSpeed = lineGen.scrollSpeed;
-            Vector3 offset = new Vector3(0, (Time.time - tmpTime) * 0.3f, 0);
+            Vector3 offset = new Vector3(0, (Time.time - tmpTime) * speed, 0);
             rend.material.mainTextureOffset = offset;
            
         } else

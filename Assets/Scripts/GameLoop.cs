@@ -24,7 +24,7 @@ public class GameLoop : MonoBehaviour {
     private float tmpCounterTime = 0;
     private int hpDecreaseMultiplier = 5;
     private TutScript notificationScript;
-    private DeadMenuScript deadMenuScript;
+    private GameObject deadMenu;
     private bool gameHasStarted = false;
     private bool gameOver = false;
 
@@ -33,7 +33,9 @@ public class GameLoop : MonoBehaviour {
     void Start() {
         Physics2D.gravity = Vector2.zero;
         multiplierText.text = "Multiplier: ";
-        GameObject.Find("DeadMenu").SetActive(false);
+		deadMenu = GameObject.Find ("DeadMenu");
+		deadMenu.GetComponent<DeadMenuScript>().init();
+		deadMenu.SetActive(false);
         line = lineObject.GetComponent<LineGenerator>();
         notificationScript = GameObject.Find("NotificationText").GetComponent<TutScript>();
         notificationScript.displayText("Place your finger on the circle!", 60);
@@ -53,8 +55,9 @@ public class GameLoop : MonoBehaviour {
             GameObject.Find("HP_bar").GetComponent<PositionOfHpBar>().updateHPLine(hitPercentage);
             gameOver = true;
             playing = false;
-            GameObject.Find("DeadMenu").SetActive(true);
-            GameObject.Find("DeadMenu").GetComponent<DeadMenuScript>().init();
+			deadMenu.SetActive(true);
+			deadMenu.GetComponent<DeadMenuScript> ().setScore (score);
+          //  GameObject.Find("DeadMenu").GetComponent<DeadMenuScript>().init();
 
         }
 
