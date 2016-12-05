@@ -1,0 +1,19 @@
+#cont1 {
+  margin: 0 auto;
+  width: 500px;
+  text-align: left;
+
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+}
+
+#list li {
+  font-size: 20pt;
+
+}
+
+#list li:nth-child(even) {
+  background: whitesmoke;
+}

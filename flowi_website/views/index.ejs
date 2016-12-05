@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, shrink-to-fit=no, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Flowi</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/webpage.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/simple-sidebar.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav">
+                <li class="sidebar-brand">
+                    <a href="#top">
+                        Flowi
+                    </a>
+                </li>
+                <li>
+                    <a href="#leaderboard">Leaderboard</a>
+                </li>
+                <li>
+                    <a href="#about">About</a>
+                </li>
+                <li>
+                    <a href="#contact">Contact</a>
+                </li>
+            </ul>
+        </div>
+        
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                     <a name="top"></a>
+                        <h1 id= "container">Flowi</h1>
+                        <p>The endless runner game that makes you decide your own gaming experience. Using different paths and avoiding osbstacles, you will follow the path to achive as high a score as possible.
+
+                        But remember, the harder the path you choose, the greater will your reward will be.</p>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/bptUp6FW9pU" frameborder="0" allowfullscreen></iframe>
+                        <p>The gameplay above displays footage from the beta version of the game.</p>
+                    </div>
+                    <div>
+                        <h3>Leaderboard</h3>
+                        <a name="leaderboard"></a>
+                        <div id="leaderboard"></div>
+                        <ol id="list">
+                            <% leaders.forEach(function(element) { %>
+                                <li><%= element.name %> : <%= element.score %>
+                             <% }); %>    
+                        </ol>
+                        <form action="/" method="post">
+                            Name: <br><input type="text" name="name"></br>
+                            Score <br><input type="text" name="score"></br>
+                            <input type="submit" name="Submit">
+                        </form>
+                    </div>
+
+                    <div>
+                        <h3>About</h3>
+                        <a name="about"></a>
+                        <p id="p1">The idea behind Flowi is to give the player a new take on the old endless runner concept. The player is given the ability to affect their own gameplay as they play. This thanks to the dynamic difficulty that is implemented into the game. It's simply a fork in the path, where the player can chose to either take the easier path for lesser reward or the more difficult one for higher reward.
+                        <br>
+                        We were adamant during development that the player should instantly feel the weight of their choice, so the color scheme is different in the harder path. Also the spawnrates for collectables and enemies is much higher than in the easier one, and once you've decided to increase the diificulty then you cannot go back. So the game challanges the player to not just be quick in their reactions, but also to evaluate their own positions as they play the game. To help them succeed by strategy aswell as skill.</p>
+                    </div>
+
+                    <div>
+                        <h3>Contact</h3>
+                        <a name="contact"></a>
+                        Project leader: Emilio Lando
+                    </div>
+                </div>                
+            </div>
+        </div>
+        
+    </div>
+    
+    <script src="js/jquery.js"></script>
+
+    <script src="js/bootstrap.min.js"></script>
+
+
+</body>
+
+</html>
