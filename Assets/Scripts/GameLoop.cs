@@ -40,6 +40,7 @@ public class GameLoop : MonoBehaviour {
         notificationScript = GameObject.Find("NotificationText").GetComponent<TutScript>();
         notificationScript.displayText("Place your finger on the circle!", 60);
         lastKnownTouch.position = new Vector2(Screen.width / 2, Screen.height / 4);
+        GameObject.Find("BackgroundMusic").GetComponent<BackgroundMusicPlayer>().playMusic();
     }
 
     // Update is called once per frame
