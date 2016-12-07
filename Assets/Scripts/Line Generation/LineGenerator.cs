@@ -247,7 +247,7 @@ public class LineGenerator : MonoBehaviour {
         Vector3[] addedLine;
         Line line = mainLine;
         Vector3 from = line.endPoint;
-        lineRoll *= mainLine.lineDifficulty / 5;
+        lineRoll *= mainLine.lineDifficulty / 4;
         
         if (mainLine.shouldFork) {
             addedLine = createFork(from);
@@ -255,10 +255,10 @@ public class LineGenerator : MonoBehaviour {
         }
         else if (!obstacleNext) {
             if (lineRoll < 600) {
-                addedLine = lineTypes.randomLine(10, from, 3, mainLine.lineDifficulty);
+                addedLine = lineTypes.randomLine(7, from, 2, mainLine.lineDifficulty);
             }
             else if (lineRoll < 900) {
-                addedLine = lineTypes.zigZagLine(4, 40, 2, from, mainLine.lineDifficulty);
+                addedLine = lineTypes.zigZagLine(3, 40, 2, from, mainLine.lineDifficulty);
             }
             else {
                 addedLine = lineTypes.uLine(40, 10, from);
