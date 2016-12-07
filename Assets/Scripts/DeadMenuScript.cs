@@ -45,7 +45,7 @@ public class DeadMenuScript : MonoBehaviour {
         string gameName = "Flowi";
         float gameScore = Camera.main.GetComponent<GameLoop>().score;
         scoreBoardService.SaveUserScore(gameName, userName, gameScore, new UnityCallBack());
-        GameObject.Find("GameManager").GetComponent<GameSceneManager>().hideSubmitScreen();
+        GameObject.Find("GameManager").GetComponent<GameSceneManager>().cancelSubmit();
     }
 
     public class UnityCallBack : App42CallBack {
