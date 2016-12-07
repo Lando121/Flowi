@@ -22,7 +22,7 @@ public class GameLoop : MonoBehaviour {
     private Touch lastKnownTouch;
     private int resumeCounter = 3;
     private float tmpCounterTime = 0;
-    private int hpDecreaseMultiplier = 5;
+    private int hpDecreaseMultiplier = 15;
     private TutScript notificationScript;
     private GameObject deadMenu;
     private bool gameHasStarted = false;
